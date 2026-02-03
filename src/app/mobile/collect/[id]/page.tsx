@@ -62,7 +62,7 @@ export default function PaymentRealizationPage() {
 
         const message = `Yth Bpk/Ibu ${task.debtorName}, ini nomor Virtual Account BTN untuk pembayaran hari ini sebesar ${formatRupiah(promiseAmount)}: ${virtualAccount}. Mohon kirim bukti transfer setelah berhasil. Tks - Watu Kobu.`;
 
-        const phoneNumber = task.personalPhone?.replace(/^0/, '62').replace(/\D/g, '') || '';
+        const phoneNumber = task.phone?.replace(/^0/, '62').replace(/\D/g, '') || '';
 
         if (!phoneNumber) {
             setErrors(['Nomor telepon debitur tidak tersedia']);
@@ -236,7 +236,7 @@ export default function PaymentRealizationPage() {
                             </button>
                             <button
                                 onClick={handleShareWhatsApp}
-                                disabled={!task.personalPhone}
+                                disabled={!task.phone}
                                 className="py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
                             >
                                 <Share2 size={18} />
