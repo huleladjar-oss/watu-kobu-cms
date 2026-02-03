@@ -20,7 +20,7 @@ export default function PaymentRealizationPage() {
     const params = useParams();
     const router = useRouter();
     const { assets } = useAssets();
-    const { submitCollection } = useValidation();
+    const { submitPaymentReport } = useValidation();
     const { user } = useAuth();
 
     const taskId = params.id as string;
@@ -132,7 +132,7 @@ export default function PaymentRealizationPage() {
         };
 
         // Submit via ValidationContext
-        submitCollection(collectionData);
+        submitPaymentReport(collectionData);
 
         // Redirect to success page
         router.push('/mobile/collect/success');
