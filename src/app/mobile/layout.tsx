@@ -68,7 +68,7 @@ export default function MobileLayout({
             return;
         }
 
-        if (user.role !== 'collector') {
+        if (user.role !== 'COLLECTOR') {
             // Wrong role -> redirect to correct dashboard
             router.replace(getRedirectByRole(user.role));
             return;
@@ -76,7 +76,7 @@ export default function MobileLayout({
     }, [user, isLoading, router]);
 
     // Show loading while checking auth or if user doesn't have correct role
-    if (isLoading || !user || user.role !== 'collector') {
+    if (isLoading || !user || user.role !== 'COLLECTOR') {
         return <LoadingScreen />;
     }
 
