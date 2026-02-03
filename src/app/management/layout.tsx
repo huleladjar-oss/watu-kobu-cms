@@ -31,9 +31,9 @@ function getInitials(name: string): string {
 // Helper function to capitalize role
 function formatRole(role: string): string {
     const roleMap: Record<string, string> = {
-        admin: 'Admin Staff',
-        manager: 'Regional Director',
-        collector: 'Field Collector',
+        ADMIN: 'Admin Staff',
+        MANAGER: 'Regional Director',
+        COLLECTOR: 'Field Collector',
     };
     return roleMap[role] || role;
 }
@@ -41,9 +41,9 @@ function formatRole(role: string): string {
 // Helper function to get redirect path by role
 function getRedirectByRole(role: string): string {
     const redirectMap: Record<string, string> = {
-        admin: '/admin/dashboard',
-        manager: '/management/dashboard',
-        collector: '/mobile',
+        ADMIN: '/admin/dashboard',
+        MANAGER: '/management/dashboard',
+        COLLECTOR: '/mobile',
     };
     return redirectMap[role] || '/login';
 }
@@ -117,7 +117,7 @@ export default function ManagementLayout({
             return;
         }
 
-        if (user.role !== 'manager') {
+        if (user.role !== 'MANAGER') {
             // Wrong role -> redirect to correct dashboard
             router.replace(getRedirectByRole(user.role));
             return;
@@ -125,7 +125,7 @@ export default function ManagementLayout({
     }, [user, isLoading, router]);
 
     // Show loading while checking auth or if user doesn't have correct role
-    if (isLoading || !user || user.role !== 'manager') {
+    if (isLoading || !user || user.role !== 'MANAGER') {
         return <LoadingScreen />;
     }
 
