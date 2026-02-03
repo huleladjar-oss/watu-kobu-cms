@@ -1,0 +1,181 @@
+// =============================================================================
+// WATU KOBU - Debt Collector Management System
+// Prisma Schema - PostgreSQL (Supabase Compatible)
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum Role {
+  ADMIN
+  MANAGER
+  COLLECTOR
+}
+
+enum AssetStatus {
+  LANCAR
+  MACET
+  JANJI_BAYAR
+}
+
+enum ValidationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// =============================================================================
+// USER MODEL
+// =============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String    // Hashed password
+  name          String
+  role          Role      @default(COLLECTOR)
+  employeeId    String?   @unique // NIK Karyawan
+  area          String?   // Area Tugas (Misal: Jakarta Selatan)
+  avatarUrl     String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  assignments    Assignment[]
+  visitReports   VisitReport[]
+  paymentReports PaymentReport[]
+}
+
+// =============================================================================
+// BRANCH MODEL
+// =============================================================================
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String   // Misal: "KCP Bogor"
+  region    String   // Misal: "Jawa Barat"
+  assets    Asset[]
+  createdAt DateTime @default(now())
+}
+
+// =============================================================================
+// ASSET MODEL (Debitur)
+// =============================================================================
+
+model Asset {
+  id                String      @id // Loan ID (Manual Input dari Bank)
+  name              String      // Nama Debitur
+  address           String
+  locationLat       Float?      // Koordinat Rumah
+  locationLng       Float?
+  phone             String?
+  vehiclePlate      String?     // Plat Nomor Kendaraan
+  
+  // Financial Data
+  principalDebt     Float       // Pokok Hutang
+  totalArrears      Float       // Total Tunggakan
+  interestArrears   Float       @default(0) // Tunggakan Bunga
+  penaltyArrears    Float       @default(0) // Tunggakan Denda
+  
+  status            AssetStatus @default(LANCAR)
+  branchId          String
+  branch            Branch      @relation(fields: [branchId], references: [id])
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  assignments       Assignment[]
+  visitReports      VisitReport[]
+  paymentReports    PaymentReport[]
+
+  @@index([name])
+  @@index([phone])
+  @@index([vehiclePlate])
+  @@index([status])
+  @@index([branchId])
+}
+
+// =============================================================================
+// ASSIGNMENT MODEL (Penugasan)
+// =============================================================================
+
+model Assignment {
+  id          String   @id @default(cuid())
+  userId      String
+  assetId     String
+  assignedAt  DateTime @default(now())
+  dueDate     DateTime?
+  status      String   @default("ACTIVE") // ACTIVE, COMPLETED
+
+  user        User     @relation(fields: [userId], references: [id])
+  asset       Asset    @relation(fields: [assetId], references: [id])
+
+  @@index([userId])
+  @@index([assetId])
+  @@index([status])
+}
+
+// =============================================================================
+// VISIT REPORT MODEL (Laporan Kunjungan)
+// =============================================================================
+
+model VisitReport {
+  id              String           @id @default(cuid())
+  assetId         String
+  collectorId     String
+  timestamp       DateTime         @default(now())
+  
+  outcome         String           // BERTEMU, TIDAK_BERTEMU, PINDAH
+  notes           String?
+  gpsLat          Float?
+  gpsLng          Float?
+  evidencePhoto   String?          // URL Foto Bukti
+  
+  statusValidation ValidationStatus @default(PENDING)
+  
+  asset           Asset            @relation(fields: [assetId], references: [id])
+  collector       User             @relation(fields: [collectorId], references: [id])
+
+  @@index([assetId])
+  @@index([collectorId])
+  @@index([statusValidation])
+  @@index([timestamp])
+}
+
+// =============================================================================
+// PAYMENT REPORT MODEL (Laporan Pembayaran)
+// =============================================================================
+
+model PaymentReport {
+  id              String           @id @default(cuid())
+  assetId         String
+  collectorId     String
+  timestamp       DateTime         @default(now())
+  
+  amount          Float
+  method          String           // CASH, TRANSFER, VA
+  proofPhoto      String?          // URL Bukti Struk
+  
+  statusValidation ValidationStatus @default(PENDING)
+
+  asset           Asset            @relation(fields: [assetId], references: [id])
+  collector       User             @relation(fields: [collectorId], references: [id])
+
+  @@index([assetId])
+  @@index([collectorId])
+  @@index([statusValidation])
+  @@index([timestamp])
+}
