@@ -232,13 +232,13 @@ export default function MobileTaskDetailPage() {
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <p className="text-xs text-gray-500 mb-2 font-semibold">Telp Pribadi</p>
-                                {task.personalPhone && task.personalPhone !== '-' ? (
+                                {task.phone && task.phone !== '-' ? (
                                     <a
-                                        href={`tel:${task.personalPhone}`}
+                                        href={`tel:${task.phone}`}
                                         className="flex items-center gap-2 text-sm text-blue-600 font-medium hover:underline"
                                     >
                                         <Phone size={14} />
-                                        {task.personalPhone}
+                                        {task.phone}
                                     </a>
                                 ) : (
                                     <p className="text-sm text-gray-400">-</p>

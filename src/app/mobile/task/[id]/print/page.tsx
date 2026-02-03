@@ -208,7 +208,7 @@ export default function MobileTaskPrintPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Telepon Pribadi</p>
-                                <p className="text-gray-900 font-mono">{task.personalPhone || '-'}</p>
+                                <p className="text-gray-900 font-mono">{task.phone || '-'}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Telepon Kantor</p>

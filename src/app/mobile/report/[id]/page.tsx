@@ -260,7 +260,7 @@ export default function MobileReportPage() {
                                 <label className="block text-xs font-semibold text-gray-500 mb-1">No Telepon</label>
                                 <input
                                     type="text"
-                                    value={task.personalPhone || '-'}
+                                    value={task.phone || '-'}
                                     disabled
                                     className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium cursor-not-allowed"
                                 />
