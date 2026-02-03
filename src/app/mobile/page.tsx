@@ -52,7 +52,7 @@ export default function MobileHomePage() {
         if (!user) return [];
 
         // Debug mode: if admin, show all tasks
-        if (user.role === 'admin') {
+        if (user.role === 'ADMIN') {
             return assets.filter((a) => a.collectorId !== null);
         }
 
