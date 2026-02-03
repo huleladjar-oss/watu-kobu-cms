@@ -343,7 +343,7 @@ export default function MobileHomePage() {
                 </div>
 
                 {/* Debug Info (Admin Only) */}
-                {user.role === 'admin' && (
+                {user.role === 'ADMIN' && (
                     <div className="px-6 pb-6">
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <p className="text-xs text-blue-700 font-semibold">🔧 DEBUG MODE</p>
