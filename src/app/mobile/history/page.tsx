@@ -359,8 +359,8 @@ export default function MobileHistoryPage() {
 
         paymentReports.forEach(report => {
             if (report.collectorId !== user?.id) return;
-            if (!report.submissionDate) return;
-            const dateObj = new Date(report.submissionDate);
+            if (!report.timestamp) return;
+            const dateObj = new Date(report.timestamp);
             if (isNaN(dateObj.getTime())) return;
             const reportDate = dateObj.toISOString().split('T')[0];
             if (reportDate !== selectedDate) return;
@@ -374,15 +374,15 @@ export default function MobileHistoryPage() {
             myReports.push({
                 id: report.id,
                 type: 'PAYMENT',
-                time: extractTime(report.submissionDate),
+                time: extractTime(report.timestamp),
                 timestamp: dateObj.getTime(),
-                debtorName: report.debtorName || getAssetName(report.assetId),
+                debtorName: report.debtorName || getAssetName(report.loanId),
                 detail: 'Pembayaran',
-                amount: report.amount,
-                method: report.method,
+                amount: report.paidAmount,
+                method: report.paymentMethod,
                 status: statusMap[report.status] || 'Pending',
-                rejectReason: report.rejectReason,
-                assetId: report.assetId,
+                rejectReason: report.rejectionReason,
+                assetId: report.loanId,
             });
         });
 
