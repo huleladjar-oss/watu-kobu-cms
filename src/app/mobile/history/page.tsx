@@ -158,10 +158,10 @@ function CalendarModal({
                                 key={day}
                                 onClick={() => handleDayClick(day)}
                                 className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all ${isSelected
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : isToday
-                                            ? 'bg-blue-100 text-blue-700 font-bold'
-                                            : 'text-slate-700 hover:bg-slate-100'
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : isToday
+                                        ? 'bg-blue-100 text-blue-700 font-bold'
+                                        : 'text-slate-700 hover:bg-slate-100'
                                     }`}
                             >
                                 {day}
@@ -348,12 +348,12 @@ export default function MobileHistoryPage() {
                 type: 'VISIT',
                 time: extractTime(report.submissionDate),
                 timestamp: dateObj.getTime(),
-                debtorName: report.debtorName || getAssetName(report.assetId),
-                detail: report.notes || 'Kunjungan Lapangan',
-                result: report.result,
+                debtorName: report.debtorName || getAssetName(report.loanId),
+                detail: report.problemDescription || 'Kunjungan Lapangan',
+                result: report.collateralStatus,
                 status: report.status,
-                rejectReason: report.rejectReason,
-                assetId: report.assetId,
+                rejectReason: report.rejectionReason,
+                assetId: report.loanId,
             });
         });
 
@@ -487,8 +487,8 @@ export default function MobileHistoryPage() {
                             key={chip.id}
                             onClick={() => setActiveFilter(chip.id)}
                             className={`flex shrink-0 items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-150 ${activeFilter === chip.id
-                                    ? 'bg-slate-800 text-white shadow-md'
-                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                ? 'bg-slate-800 text-white shadow-md'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                                 }`}
                         >
                             {chip.emoji && <span>{chip.emoji}</span>}
