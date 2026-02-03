@@ -136,8 +136,8 @@ export default function MobileReportPage() {
             } : undefined,
 
             // Evidence
-            gpsLatitude: gpsLocation.lat,
-            gpsLongitude: gpsLocation.lng,
+            gpsLatitude: gpsLocation?.lat ?? 0,
+            gpsLongitude: gpsLocation?.lng ?? 0,
             photos: [
                 photoFront?.name || '',
                 photoSide?.name || '',
