@@ -33,7 +33,7 @@ export default function MobileTaskPrintPage() {
         if (!task) return null;
 
         const totalArrears = task.totalArrears;
-        const estimatedSettlement = task.outstandingPrincipal + task.arrearsInterest + task.arrearsPenalty;
+        const estimatedSettlement = task.principalBalance + task.interestArrears + task.penaltyArrears;
 
         return {
             totalArrears,
@@ -109,7 +109,7 @@ export default function MobileTaskPrintPage() {
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Jenis Kredit</p>
-                            <p className="text-gray-900">{task.loanType}</p>
+                            <p className="text-gray-900">{task.creditType}</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Cabang</p>
@@ -135,15 +135,15 @@ export default function MobileTaskPrintPage() {
                         </div>
                         <div>
                             <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Saldo Pokok</p>
-                            <p className="font-semibold text-blue-700">{formatRupiah(task.outstandingPrincipal)}</p>
+                            <p className="font-semibold text-blue-700">{formatRupiah(task.principalBalance)}</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Tanggal Realisasi</p>
-                            <p className="text-gray-900">{formatDate(task.disbursementDate)}</p>
+                            <p className="text-gray-900">{formatDate(task.realizationDate)}</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Tanggal Jatuh Tempo</p>
-                            <p className="text-gray-900">{formatDate(task.dueDate)}</p>
+                            <p className="text-gray-900">{formatDate(task.maturityDate)}</p>
                         </div>
                     </div>
 
@@ -153,15 +153,15 @@ export default function MobileTaskPrintPage() {
                             <tbody>
                                 <tr className="border-b border-gray-200">
                                     <td className="py-2 text-gray-700">Tunggakan Pokok</td>
-                                    <td className="py-2 text-right font-semibold text-gray-900">{formatRupiah(task.arrearsPrincipal)}</td>
+                                    <td className="py-2 text-right font-semibold text-gray-900">{formatRupiah(task.principalArrears)}</td>
                                 </tr>
                                 <tr className="border-b border-gray-200">
                                     <td className="py-2 text-gray-700">Tunggakan Bunga</td>
-                                    <td className="py-2 text-right font-semibold text-gray-900">{formatRupiah(task.arrearsInterest)}</td>
+                                    <td className="py-2 text-right font-semibold text-gray-900">{formatRupiah(task.interestArrears)}</td>
                                 </tr>
                                 <tr className="border-b border-gray-200">
                                     <td className="py-2 text-gray-700">Tunggakan Denda</td>
-                                    <td className="py-2 text-right font-semibold text-gray-900">{formatRupiah(task.arrearsPenalty)}</td>
+                                    <td className="py-2 text-right font-semibold text-gray-900">{formatRupiah(task.penaltyArrears)}</td>
                                 </tr>
                                 <tr className="border-t-2 border-red-300 font-bold">
                                     <td className="py-2 text-red-700 uppercase">Total Tunggakan</td>
@@ -197,7 +197,7 @@ export default function MobileTaskPrintPage() {
 
                         <div>
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Alamat KTP</p>
-                            <p className="text-gray-900 leading-relaxed">{task.idCardAddress || '-'}</p>
+                            <p className="text-gray-900 leading-relaxed">{task.identityAddress || '-'}</p>
                         </div>
 
                         <div>
@@ -227,19 +227,19 @@ export default function MobileTaskPrintPage() {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Nama</p>
-                            <p className="text-gray-900 font-semibold">{task.emergencyContactName || '-'}</p>
+                            <p className="text-gray-900 font-semibold">{task.emergencyName || '-'}</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Hubungan</p>
-                            <p className="text-gray-900">{task.emergencyContactRelation || '-'}</p>
+                            <p className="text-gray-900">-</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Telepon</p>
-                            <p className="text-gray-900 font-mono">{task.emergencyContactPhone || '-'}</p>
+                            <p className="text-gray-900 font-mono">{task.emergencyPhone || '-'}</p>
                         </div>
                         <div className="col-span-2">
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Alamat</p>
-                            <p className="text-gray-900 leading-relaxed">{task.emergencyContactAddress || '-'}</p>
+                            <p className="text-gray-900 leading-relaxed">{task.emergencyAddress || '-'}</p>
                         </div>
                     </div>
                 </div>

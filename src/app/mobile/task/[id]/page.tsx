@@ -36,7 +36,7 @@ export default function MobileTaskDetailPage() {
         if (!task) return null;
 
         const totalArrears = task.totalArrears; // Sum of all arrears
-        const estimatedSettlement = task.outstandingPrincipal + task.arrearsInterest + task.arrearsPenalty;
+        const estimatedSettlement = task.principalBalance + task.interestArrears + task.penaltyArrears;
 
         return {
             totalArrears,
@@ -119,7 +119,7 @@ export default function MobileTaskDetailPage() {
                         <div className="grid grid-cols-2 gap-3 text-sm">
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Jenis Kredit</p>
-                                <p className="font-semibold text-gray-900">{task.loanType}</p>
+                                <p className="font-semibold text-gray-900">{task.creditType}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Cabang</p>
@@ -147,15 +147,15 @@ export default function MobileTaskDetailPage() {
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Saldo Pokok</p>
-                                <p className="font-semibold text-blue-700">{formatRupiah(task.outstandingPrincipal)}</p>
+                                <p className="font-semibold text-blue-700">{formatRupiah(task.principalBalance)}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Tgl Realisasi</p>
-                                <p className="font-medium text-gray-700">{formatDate(task.disbursementDate)}</p>
+                                <p className="font-medium text-gray-700">{formatDate(task.realizationDate)}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Tgl Jatuh Tempo</p>
-                                <p className="font-medium text-gray-700">{formatDate(task.dueDate)}</p>
+                                <p className="font-medium text-gray-700">{formatDate(task.maturityDate)}</p>
                             </div>
                         </div>
 
@@ -165,15 +165,15 @@ export default function MobileTaskDetailPage() {
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Tunggakan Pokok</span>
-                                    <span className="font-semibold text-gray-900">{formatRupiah(task.arrearsPrincipal)}</span>
+                                    <span className="font-semibold text-gray-900">{formatRupiah(task.principalArrears)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Tunggakan Bunga</span>
-                                    <span className="font-semibold text-gray-900">{formatRupiah(task.arrearsInterest)}</span>
+                                    <span className="font-semibold text-gray-900">{formatRupiah(task.interestArrears)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Tunggakan Denda</span>
-                                    <span className="font-semibold text-gray-900">{formatRupiah(task.arrearsPenalty)}</span>
+                                    <span className="font-semibold text-gray-900">{formatRupiah(task.penaltyArrears)}</span>
                                 </div>
                             </div>
                         </div>
@@ -216,7 +216,7 @@ export default function MobileTaskDetailPage() {
                         <div className="mb-4">
                             <p className="text-xs text-gray-500 mb-1 font-semibold">Alamat KTP</p>
                             <p className="text-sm text-gray-700 leading-relaxed">
-                                {task.idCardAddress || '-'}
+                                {task.identityAddress || '-'}
                             </p>
                         </div>
 
@@ -272,26 +272,24 @@ export default function MobileTaskDetailPage() {
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Nama</p>
                                 <p className="text-sm font-semibold text-gray-900">
-                                    {task.emergencyContactName || '-'}
+                                    {task.emergencyName || '-'}
                                 </p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <p className="text-xs text-gray-500 mb-1">Hubungan</p>
-                                    <p className="text-sm text-gray-700">
-                                        {task.emergencyContactRelation || '-'}
-                                    </p>
+                                    <p className="text-sm text-gray-700">-</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 mb-2">Telepon</p>
-                                    {task.emergencyContactPhone && task.emergencyContactPhone !== '-' ? (
+                                    {task.emergencyPhone && task.emergencyPhone !== '-' ? (
                                         <a
-                                            href={`tel:${task.emergencyContactPhone}`}
+                                            href={`tel:${task.emergencyPhone}`}
                                             className="flex items-center gap-2 text-sm text-blue-600 font-medium hover:underline"
                                         >
                                             <Phone size={14} />
-                                            {task.emergencyContactPhone}
+                                            {task.emergencyPhone}
                                         </a>
                                     ) : (
                                         <p className="text-sm text-gray-400">-</p>
@@ -302,7 +300,7 @@ export default function MobileTaskDetailPage() {
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Alamat</p>
                                 <p className="text-sm text-gray-700 leading-relaxed">
-                                    {task.emergencyContactAddress || '-'}
+                                    {task.emergencyAddress || '-'}
                                 </p>
                             </div>
                         </div>
