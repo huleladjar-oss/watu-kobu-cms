@@ -127,7 +127,7 @@ export default function MobileTaskDetailPage() {
                             </div>
                             <div className="col-span-2">
                                 <p className="text-xs text-gray-500 mb-1">Kantor Wilayah</p>
-                                <p className="font-semibold text-gray-900">{task.regionalOffice}</p>
+                                <p className="font-semibold text-gray-900">{task.region}</p>
                             </div>
                         </div>
                     </div>

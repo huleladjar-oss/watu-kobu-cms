@@ -117,7 +117,7 @@ export default function MobileTaskPrintPage() {
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Kantor Wilayah</p>
-                            <p className="text-gray-900">{task.regionalOffice}</p>
+                            <p className="text-gray-900">{task.region}</p>
                         </div>
                     </div>
                 </div>
