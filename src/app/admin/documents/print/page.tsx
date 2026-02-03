@@ -9,19 +9,19 @@ export default function PrintReportPage() {
     const searchParams = useSearchParams();
     const startDate = searchParams.get('start') || '';
     const endDate = searchParams.get('end') || '';
-    const { reports } = useValidation();
+    const { fieldReports } = useValidation();
 
     // Filter approved reports by date range
     const filteredReports = useMemo(() => {
         if (!startDate || !endDate) return [];
         const start = new Date(startDate).getTime();
         const end = new Date(endDate).getTime() + 86400000; // Add 1 day to include end date
-        return reports.filter((r) => {
+        return fieldReports.filter((r) => {
             if (r.status !== 'Approved') return false;
             const submitTime = new Date(r.submissionDate).getTime();
             return submitTime >= start && submitTime < end;
         });
-    }, [reports, startDate, endDate]);
+    }, [fieldReports, startDate, endDate]);
 
     // Auto-print when page loads
     useEffect(() => {
