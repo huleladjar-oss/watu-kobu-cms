@@ -123,6 +123,8 @@ export default function PaymentRealizationPage() {
             collectorName: user.name,
             debtorName: task.debtorName,
             branch: task.branch,
+            timestamp: new Date().toISOString(),
+            paymentMethod: 'Virtual Account' as const,
             promiseAmount,
             paymentStatus,
             paidAmount: paymentStatus === 'full' ? promiseAmount : (paymentStatus === 'partial' ? parseFloat(partialAmount.replace(/\D/g, '')) : 0),
