@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
 // Comprehensive Asset interface matching Bank data standards (24 columns)
 export interface Asset {
@@ -51,252 +51,21 @@ export interface Collector {
     assignedCount: number;
 }
 
-// NOTE: Mock collectors removed - now fetched from database via API
-
-// Initial mock assets with comprehensive structure
-const initialAssets: Asset[] = [
-    {
-        id: 'WK-1001',
-        loanId: '0012345678',
-        debtorName: 'Ahmad Wijaya',
-        identityAddress: 'Jl. Sudirman No. 123, Jakarta Selatan',
-        officeAddress: 'Gedung Graha Mandiri Lt. 5',
-        phone: '081234567890',
-        officePhone: '021-5555555',
-        emergencyName: 'Siti Wijaya',
-        emergencyPhone: '081298765432',
-        emergencyAddress: 'Jl. Merdeka No. 45, Jakarta Pusat',
-        branch: 'KCP JAKARTA SELATAN',
-        region: 'KANWIL JAKARTA 1',
-        spkStatus: 'AKTIF',
-        creditType: 'KPR',
-        collateralAddress: 'Jl. Menteng Raya No. 10',
-        initialPlafond: 500000000,
-        realizationDate: '2023-01-15',
-        maturityDate: '2028-01-15',
-        principalBalance: 350000000,
-        interestArrears: 5000000,
-        penaltyArrears: 1500000,
-        principalArrears: 8000000,
-        totalArrears: 14500000,
-        totalPayoff: 365000000,
-        collectorId: '3',
-        lastUpdate: '2026-01-30',
-    },
-    {
-        id: 'WK-1002',
-        loanId: '0012345679',
-        debtorName: 'Dewi Lestari',
-        identityAddress: 'Jl. Margonda Raya No. 88, Depok',
-        officeAddress: 'PT. Maju Jaya, Depok',
-        phone: '082345678901',
-        officePhone: '021-6666666',
-        emergencyName: 'Budi Lestari',
-        emergencyPhone: '082198765432',
-        emergencyAddress: 'Jl. Diponegoro No. 12, Depok',
-        branch: 'KCP DEPOK',
-        region: 'KANWIL JABAR',
-        spkStatus: 'AKTIF',
-        creditType: 'KMK',
-        collateralAddress: 'Jl. Raya Bogor Km 30',
-        initialPlafond: 200000000,
-        realizationDate: '2024-03-20',
-        maturityDate: '2027-03-20',
-        principalBalance: 180000000,
-        interestArrears: 2000000,
-        penaltyArrears: 500000,
-        principalArrears: 3000000,
-        totalArrears: 5500000,
-        totalPayoff: 186000000,
-        collectorId: '3',
-        lastUpdate: '2026-01-29',
-    },
-    {
-        id: 'WK-1003',
-        loanId: '0012345680',
-        debtorName: 'Hendra Gunawan',
-        identityAddress: 'Jl. Pajajaran No. 55, Bogor',
-        officeAddress: 'CV Sukses Makmur',
-        phone: '083456789012',
-        officePhone: '0251-333333',
-        emergencyName: 'Rina Gunawan',
-        emergencyPhone: '083198765432',
-        emergencyAddress: 'Jl. Surya Kencana No. 8, Bogor',
-        branch: 'KCP BOGOR',
-        region: 'KANWIL JABAR',
-        spkStatus: 'AKTIF',
-        creditType: 'KPR',
-        collateralAddress: 'Perumahan Cibinong Indah Blok A5',
-        initialPlafond: 750000000,
-        realizationDate: '2022-06-10',
-        maturityDate: '2032-06-10',
-        principalBalance: 620000000,
-        interestArrears: 15000000,
-        penaltyArrears: 3000000,
-        principalArrears: 25000000,
-        totalArrears: 43000000,
-        totalPayoff: 665000000,
-        collectorId: '3',
-        lastUpdate: '2026-01-28',
-    },
-    {
-        id: 'WK-1004',
-        loanId: '0012345681',
-        debtorName: 'Siti Nurhaliza',
-        identityAddress: 'Jl. BSD Raya No. 101, Tangerang',
-        officeAddress: 'Mall BSD City',
-        phone: '084567890123',
-        officePhone: '021-7777777',
-        emergencyName: 'Ahmad Nurhaliza',
-        emergencyPhone: '084198765432',
-        emergencyAddress: 'Jl. Serpong No. 20, Tangerang',
-        branch: 'KCP TANGERANG',
-        region: 'KANWIL BANTEN',
-        spkStatus: 'PASIF',
-        creditType: 'KMK',
-        collateralAddress: 'Ruko BSD Junction Blok B12',
-        initialPlafond: 150000000,
-        realizationDate: '2024-01-05',
-        maturityDate: '2026-01-05',
-        principalBalance: 50000000,
-        interestArrears: 0,
-        penaltyArrears: 0,
-        principalArrears: 0,
-        totalArrears: 0,
-        totalPayoff: 50000000,
-        collectorId: '3',
-        lastUpdate: '2026-01-27',
-    },
-    {
-        id: 'WK-1005',
-        loanId: '0012345682',
-        debtorName: 'Rudi Hartono',
-        identityAddress: 'Jl. Ahmad Yani No. 77, Bekasi',
-        officeAddress: 'PT. Hartono Group',
-        phone: '085678901234',
-        officePhone: '021-8888888',
-        emergencyName: 'Linda Hartono',
-        emergencyPhone: '085198765432',
-        emergencyAddress: 'Jl. Kalimalang No. 15, Bekasi',
-        branch: 'KCP BEKASI',
-        region: 'KANWIL JABAR',
-        spkStatus: 'AKTIF',
-        creditType: 'KPR',
-        collateralAddress: 'Perumahan Harapan Indah Blok C8',
-        initialPlafond: 450000000,
-        realizationDate: '2023-09-01',
-        maturityDate: '2033-09-01',
-        principalBalance: 420000000,
-        interestArrears: 8000000,
-        penaltyArrears: 2000000,
-        principalArrears: 12000000,
-        totalArrears: 22000000,
-        totalPayoff: 442000000,
-        collectorId: null,
-        lastUpdate: '2026-01-26',
-    },
-    {
-        id: 'WK-1006',
-        loanId: '0012345683',
-        debtorName: 'Maria Theresia',
-        identityAddress: 'Jl. Gajah Mada No. 200, Jakarta Barat',
-        officeAddress: 'Glodok Plaza',
-        phone: '086789012345',
-        officePhone: '021-9999999',
-        emergencyName: 'Yohanes Theresia',
-        emergencyPhone: '086198765432',
-        emergencyAddress: 'Jl. Hayam Wuruk No. 30, Jakarta Barat',
-        branch: 'KCP JAKARTA BARAT',
-        region: 'KANWIL JAKARTA 2',
-        spkStatus: 'AKTIF',
-        creditType: 'KMK',
-        collateralAddress: 'Ruko Grogol Blok F15',
-        initialPlafond: 300000000,
-        realizationDate: '2024-05-15',
-        maturityDate: '2027-05-15',
-        principalBalance: 280000000,
-        interestArrears: 4000000,
-        penaltyArrears: 1000000,
-        principalArrears: 5000000,
-        totalArrears: 10000000,
-        totalPayoff: 290000000,
-        collectorId: '3',
-        lastUpdate: '2026-01-25',
-    },
-    {
-        id: 'WK-1007',
-        loanId: '0012345684',
-        debtorName: 'Bambang Sutrisno',
-        identityAddress: 'Jl. Pramuka No. 150, Jakarta Timur',
-        officeAddress: 'Pasar Jatinegara',
-        phone: '087890123456',
-        officePhone: '021-4444444',
-        emergencyName: 'Sumiati Sutrisno',
-        emergencyPhone: '087198765432',
-        emergencyAddress: 'Jl. Matraman No. 25, Jakarta Timur',
-        branch: 'KCP JAKARTA TIMUR',
-        region: 'KANWIL JAKARTA 1',
-        spkStatus: 'AKTIF',
-        creditType: 'KPR',
-        collateralAddress: 'Perumahan Cakung Indah Blok D10',
-        initialPlafond: 600000000,
-        realizationDate: '2021-12-01',
-        maturityDate: '2031-12-01',
-        principalBalance: 480000000,
-        interestArrears: 25000000,
-        penaltyArrears: 8000000,
-        principalArrears: 45000000,
-        totalArrears: 78000000,
-        totalPayoff: 558000000,
-        collectorId: null,
-        lastUpdate: '2026-01-15',
-    },
-    {
-        id: 'WK-1008',
-        loanId: '0012345685',
-        debtorName: 'Eko Prasetyo',
-        identityAddress: 'Jl. Yos Sudarso No. 88, Jakarta Utara',
-        officeAddress: 'Pelabuhan Tanjung Priok',
-        phone: '088901234567',
-        officePhone: '021-2222222',
-        emergencyName: 'Dwi Prasetyo',
-        emergencyPhone: '088198765432',
-        emergencyAddress: 'Jl. Pluit No. 10, Jakarta Utara',
-        branch: 'KCP JAKARTA UTARA',
-        region: 'KANWIL JAKARTA 2',
-        spkStatus: 'AKTIF',
-        creditType: 'KMK',
-        collateralAddress: 'Gudang Sunter Blok M5',
-        initialPlafond: 400000000,
-        realizationDate: '2022-08-20',
-        maturityDate: '2025-08-20',
-        principalBalance: 150000000,
-        interestArrears: 12000000,
-        penaltyArrears: 5000000,
-        principalArrears: 18000000,
-        totalArrears: 35000000,
-        totalPayoff: 185000000,
-        collectorId: '4',
-        lastUpdate: '2026-01-10',
-    },
-];
-
-// New asset input type (without ID)
-export type NewAssetInput = Omit<Asset, 'id'>;
-
 // Context type
 interface AssetContextType {
     assets: Asset[];
-    addAsset: (newAsset: NewAssetInput) => Asset;
-    importAssets: (newAssets: Asset[]) => number;
-    updateAsset: (id: string, updatedData: Partial<Asset>) => void;
+    isLoading: boolean;
+    error: string | null;
+    addAsset: (asset: Omit<Asset, 'id' | 'lastUpdate'>) => Promise<void>;
+    importAssets: (newAssets: Omit<Asset, 'id' | 'lastUpdate'>[]) => Promise<number>;
+    updateAsset: (id: string, updates: Partial<Asset>) => Promise<void>;
     updateAssetBalance: (loanId: string, paymentAmount: number) => void;
-    deleteAsset: (id: string) => void;
-    deleteBulkAssets: (ids: string[]) => number;
-    assignAsset: (assetId: string, collectorId: string) => void;
-    assignBulkAssets: (assetIds: string[], collectorId: string) => number;
-    unassignAsset: (assetId: string) => void;
-    refreshAssets: () => void;
+    deleteAsset: (id: string) => Promise<void>;
+    deleteBulkAssets: (ids: string[]) => Promise<number>;
+    assignAsset: (assetId: string, collectorId: string) => Promise<void>;
+    assignBulkAssets: (assetIds: string[], collectorId: string) => Promise<number>;
+    unassignAsset: (assetId: string) => Promise<void>;
+    refreshAssets: () => Promise<void>;
     getUnassignedAssets: () => Asset[];
     getAssetsByCollector: (collectorId: string) => Asset[];
     getAssetById: (id: string) => Asset | undefined;
@@ -307,171 +76,102 @@ interface AssetContextType {
         passiveCount: number;
         unassignedCount: number;
     };
-    getRecentAssets: (limit: number) => Asset[];
+    getRecentAssets: (limit?: number) => Asset[];
 }
 
+// Create context
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
 
-// Generate unique ID
-function generateAssetId(): string {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `WK-${randomNum}`;
-}
-
-// Sanitize collateral address - convert empty/null/'-' to 'Kredit Tanpa Agunan'
-export function sanitizeCollateralAddress(address: string | null | undefined): string {
-    if (!address) return 'Kredit Tanpa Agunan';
-    const trimmed = address.trim();
-    if (trimmed === '' || trimmed === '-' || trimmed === '0') {
-        return 'Kredit Tanpa Agunan';
-    }
-    return trimmed;
-}
-
+// Provider component
 export function AssetProvider({ children }: { children: ReactNode }) {
-    const [assets, setAssets] = useState<Asset[]>([...initialAssets]);
+    const [assets, setAssets] = useState<Asset[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch assets from database on mount
+    const fetchAssets = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await fetch('/api/assets');
+            const data = await response.json();
+
+            if (data.success) {
+                setAssets(data.data);
+            } else {
+                setError(data.error || 'Failed to fetch assets');
+            }
+        } catch (err) {
+            console.error('Error fetching assets:', err);
+            setError('Failed to connect to database');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchAssets();
+    }, [fetchAssets]);
 
     // Add new asset
-    const addAsset = (newAsset: NewAssetInput): Asset => {
-        const asset: Asset = {
-            ...newAsset,
-            id: generateAssetId(),
-            collateralAddress: sanitizeCollateralAddress(newAsset.collateralAddress),
-        };
-        setAssets((prev) => [asset, ...prev]);
-        return asset;
-    };
+    const addAsset = async (asset: Omit<Asset, 'id' | 'lastUpdate'>) => {
+        try {
+            const response = await fetch('/api/assets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(asset),
+            });
+            const data = await response.json();
 
-    // Import multiple assets (for CSV import)
-    const importAssets = (newAssets: Asset[]): number => {
-        // Filter out duplicates by loanId and sanitize collateral addresses
-        const existingLoanIds = new Set(assets.map((a) => a.loanId));
-        const uniqueNewAssets = newAssets
-            .filter((a) => !existingLoanIds.has(a.loanId))
-            .map((asset) => ({
-                ...asset,
-                collateralAddress: sanitizeCollateralAddress(asset.collateralAddress),
-            }));
-
-        if (uniqueNewAssets.length > 0) {
-            setAssets((prev) => [...uniqueNewAssets, ...prev]);
+            if (data.success) {
+                await fetchAssets(); // Refresh from DB
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            console.error('Error adding asset:', err);
+            throw err;
         }
-
-        return uniqueNewAssets.length;
     };
 
-    // Update existing asset
-    const updateAsset = (id: string, updatedData: Partial<Asset>) => {
-        setAssets((prevAssets) =>
-            prevAssets.map((asset) =>
-                asset.id === id
-                    ? {
-                        ...asset,
-                        ...updatedData,
-                        lastUpdate: new Date().toISOString().split('T')[0],
-                    }
-                    : asset
-            )
-        );
+    // Import multiple assets
+    const importAssets = async (newAssets: Omit<Asset, 'id' | 'lastUpdate'>[]): Promise<number> => {
+        let successCount = 0;
+        for (const asset of newAssets) {
+            try {
+                await addAsset(asset);
+                successCount++;
+            } catch (err) {
+                console.error('Error importing asset:', err);
+            }
+        }
+        await fetchAssets();
+        return successCount;
     };
 
-    // Delete asset
-    const deleteAsset = (id: string) => {
-        setAssets((prevAssets) => prevAssets.filter((asset) => asset.id !== id));
+    // Update asset
+    const updateAsset = async (id: string, updates: Partial<Asset>) => {
+        try {
+            const response = await fetch(`/api/assets/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                // Update local state optimistically
+                setAssets(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            console.error('Error updating asset:', err);
+            throw err;
+        }
     };
 
-    // Delete multiple assets (bulk delete)
-    const deleteBulkAssets = (ids: string[]): number => {
-        const idsSet = new Set(ids);
-        setAssets((prevAssets) => prevAssets.filter((asset) => !idsSet.has(asset.id)));
-        return ids.length;
-    };
-
-    // Assign asset to a collector
-    const assignAsset = (assetId: string, collectorId: string) => {
-        setAssets((prevAssets) =>
-            prevAssets.map((asset) =>
-                asset.id === assetId
-                    ? {
-                        ...asset,
-                        collectorId,
-                        lastUpdate: new Date().toISOString().split('T')[0],
-                    }
-                    : asset
-            )
-        );
-    };
-
-    // Unassign asset from collector
-    const unassignAsset = (assetId: string) => {
-        setAssets((prevAssets) =>
-            prevAssets.map((asset) =>
-                asset.id === assetId
-                    ? {
-                        ...asset,
-                        collectorId: null,
-                        lastUpdate: new Date().toISOString().split('T')[0],
-                    }
-                    : asset
-            )
-        );
-    };
-
-    // Bulk assign assets to a collector
-    const assignBulkAssets = (assetIds: string[], collectorId: string): number => {
-        const idsSet = new Set(assetIds);
-        setAssets((prevAssets) =>
-            prevAssets.map((asset) =>
-                idsSet.has(asset.id)
-                    ? {
-                        ...asset,
-                        collectorId,
-                        lastUpdate: new Date().toISOString().split('T')[0],
-                    }
-                    : asset
-            )
-        );
-        return assetIds.length;
-    };
-
-    // Reset assets to initial data
-    const refreshAssets = () => {
-        setAssets([...initialAssets]);
-    };
-
-    // Get unassigned assets
-    const getUnassignedAssets = () => {
-        return assets.filter((asset) => asset.collectorId === null);
-    };
-
-    // Get assets by collector
-    const getAssetsByCollector = (collectorId: string) => {
-        return assets.filter((asset) => asset.collectorId === collectorId);
-    };
-
-    // Get asset by ID
-    const getAssetById = (id: string) => {
-        return assets.find((asset) => asset.id === id);
-    };
-
-    // Get asset statistics
-    const getAssetStats = () => {
-        const total = assets.length;
-        const totalArrears = assets.reduce((sum, a) => sum + a.totalArrears, 0);
-        const activeCount = assets.filter((a) => a.spkStatus === 'AKTIF').length;
-        const passiveCount = assets.filter((a) => a.spkStatus === 'PASIF').length;
-        const unassignedCount = assets.filter((a) => a.collectorId === null).length;
-
-        return {
-            total,
-            totalArrears,
-            activeCount,
-            passiveCount,
-            unassignedCount,
-        };
-    };
-
-    // Update asset balance after payment verification
+    // Update asset balance (local only for now)
     const updateAssetBalance = (loanId: string, paymentAmount: number) => {
         setAssets(prev => prev.map(asset =>
             asset.loanId === loanId
@@ -482,6 +182,147 @@ export function AssetProvider({ children }: { children: ReactNode }) {
                 }
                 : asset
         ));
+    };
+
+    // Delete asset
+    const deleteAsset = async (id: string) => {
+        try {
+            const response = await fetch(`/api/assets/${id}`, {
+                method: 'DELETE',
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setAssets(prev => prev.filter(a => a.id !== id));
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            console.error('Error deleting asset:', err);
+            throw err;
+        }
+    };
+
+    // Delete multiple assets
+    const deleteBulkAssets = async (ids: string[]): Promise<number> => {
+        let successCount = 0;
+        for (const id of ids) {
+            try {
+                await deleteAsset(id);
+                successCount++;
+            } catch (err) {
+                console.error('Error deleting asset:', err);
+            }
+        }
+        return successCount;
+    };
+
+    // Assign asset to collector
+    const assignAsset = async (assetId: string, collectorId: string) => {
+        try {
+            const response = await fetch('/api/assets/assign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetIds: [assetId], collectorId }),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setAssets(prev => prev.map(a =>
+                    a.id === assetId ? { ...a, collectorId } : a
+                ));
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            console.error('Error assigning asset:', err);
+            throw err;
+        }
+    };
+
+    // Bulk assign assets
+    const assignBulkAssets = async (assetIds: string[], collectorId: string): Promise<number> => {
+        try {
+            const response = await fetch('/api/assets/assign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetIds, collectorId }),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                const idsSet = new Set(assetIds);
+                setAssets(prev => prev.map(a =>
+                    idsSet.has(a.id) ? { ...a, collectorId } : a
+                ));
+                return data.data.assignedCount;
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            console.error('Error bulk assigning assets:', err);
+            throw err;
+        }
+    };
+
+    // Unassign asset
+    const unassignAsset = async (assetId: string) => {
+        try {
+            const response = await fetch(`/api/assets/${assetId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ collectorId: null }),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setAssets(prev => prev.map(a =>
+                    a.id === assetId ? { ...a, collectorId: null } : a
+                ));
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            console.error('Error unassigning asset:', err);
+            throw err;
+        }
+    };
+
+    // Refresh assets from database
+    const refreshAssets = async () => {
+        await fetchAssets();
+    };
+
+    // Get unassigned assets
+    const getUnassignedAssets = () => {
+        return assets.filter(asset => asset.collectorId === null);
+    };
+
+    // Get assets by collector
+    const getAssetsByCollector = (collectorId: string) => {
+        return assets.filter(asset => asset.collectorId === collectorId);
+    };
+
+    // Get asset by ID
+    const getAssetById = (id: string) => {
+        return assets.find(asset => asset.id === id);
+    };
+
+    // Get asset statistics
+    const getAssetStats = () => {
+        const total = assets.length;
+        const totalArrears = assets.reduce((sum, a) => sum + a.totalArrears, 0);
+        const activeCount = assets.filter(a => a.spkStatus === 'AKTIF').length;
+        const passiveCount = assets.filter(a => a.spkStatus === 'PASIF').length;
+        const unassignedCount = assets.filter(a => a.collectorId === null).length;
+
+        return {
+            total,
+            totalArrears,
+            activeCount,
+            passiveCount,
+            unassignedCount,
+        };
     };
 
     // Get recent assets
@@ -495,6 +336,8 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         <AssetContext.Provider
             value={{
                 assets,
+                isLoading,
+                error,
                 addAsset,
                 importAssets,
                 updateAsset,
