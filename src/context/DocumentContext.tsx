@@ -16,81 +16,8 @@ export interface Document {
     url: string;
 }
 
-// Initial mock documents
-const initialDocuments: Document[] = [
-    {
-        id: 'DOC-001',
-        title: '03.SPK.BTN.CAMD.I.2024 (Surat Perintah Kerja).pdf',
-        type: 'SPK',
-        relatedDebtor: null,
-        uploadDate: '2024-01-15',
-        fileSize: '1.2 MB',
-        url: '/documents/spk-btn-camd-2024.pdf',
-    },
-    {
-        id: 'DOC-002',
-        title: 'SPK.BRI.KC.BOGOR.II.2024.pdf',
-        type: 'SPK',
-        relatedDebtor: null,
-        uploadDate: '2024-02-20',
-        fileSize: '985 KB',
-        url: '/documents/spk-bri-bogor-2024.pdf',
-    },
-    {
-        id: 'DOC-003',
-        title: 'Somasi-1_BudiSantoso_0012345678.pdf',
-        type: 'SOMASI',
-        relatedDebtor: 'Budi Santoso (0012345678)',
-        uploadDate: '2026-01-25',
-        fileSize: '245 KB',
-        url: '/documents/somasi-1-budi.pdf',
-    },
-    {
-        id: 'DOC-004',
-        title: 'Somasi-2_SriRahayu_0023456789.pdf',
-        type: 'SOMASI',
-        relatedDebtor: 'Sri Rahayu (0023456789)',
-        uploadDate: '2026-01-28',
-        fileSize: '312 KB',
-        url: '/documents/somasi-2-sri.pdf',
-    },
-    {
-        id: 'DOC-005',
-        title: 'SHM_Tanah_Bogor_No.1234.jpg',
-        type: 'COLLATERAL',
-        relatedDebtor: 'Ahmad Suryanto (0034567890)',
-        uploadDate: '2025-11-10',
-        fileSize: '2.4 MB',
-        url: '/documents/shm-tanah-bogor.jpg',
-    },
-    {
-        id: 'DOC-006',
-        title: 'BPKB_Honda_Vario_2022.pdf',
-        type: 'COLLATERAL',
-        relatedDebtor: 'Dewi Sartika (0045678901)',
-        uploadDate: '2025-12-05',
-        fileSize: '1.8 MB',
-        url: '/documents/bpkb-honda-vario.pdf',
-    },
-    {
-        id: 'DOC-007',
-        title: 'Akta_Perjanjian_Kredit_001.pdf',
-        type: 'OTHERS',
-        relatedDebtor: 'Rudi Hartono (0056789012)',
-        uploadDate: '2025-10-20',
-        fileSize: '890 KB',
-        url: '/documents/akta-perjanjian.pdf',
-    },
-    {
-        id: 'DOC-008',
-        title: 'Foto_Agunan_Rumah_JakSel.jpg',
-        type: 'COLLATERAL',
-        relatedDebtor: 'Bambang Susilo (0078901234)',
-        uploadDate: '2025-09-15',
-        fileSize: '3.1 MB',
-        url: '/documents/foto-agunan-rumah.jpg',
-    },
-];
+// Initial documents - empty for production (data from database)
+const initialDocuments: Document[] = [];
 
 // Context type
 interface DocumentContextType {

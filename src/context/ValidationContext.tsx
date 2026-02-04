@@ -121,109 +121,11 @@ export function hasCoordinates(report: VisitReport): boolean {
     return !!report.coordinates && report.coordinates.trim() !== '';
 }
 
-// Initial mock visit reports
-const initialVisitReports: VisitReport[] = [
-    // VALID CASE 1
-    {
-        id: 'VR-001',
-        collectorId: '3',
-        collectorName: 'Budi Santoso',
-        branch: 'KCP Jakarta Selatan',
-        region: 'DKI Jakarta',
-        loanId: '0012345678',
-        debtorName: 'Ahmad Suryanto',
-        debtorPhone: '081234567890',
-        collateralAddress: 'Jl. Merdeka No. 45, Jakarta Selatan',
-        problemDescription: 'Debitur mengaku sedang kesulitan keuangan karena usaha sepi. Bersedia bayar sebagian.',
-        commitmentDate: '2026-02-05',
-        collateralStatus: 'Dihuni',
-        collateralCondition: 'Terawat',
-        hasElectricity: true,
-        hasWater: true,
-        facilitiesDistance: { school: true, mall: true, hospital: false, cityCenter: true },
-        isMarketable: true,
-        coordinates: '-6.2615,106.8106',
-        photoEvidence: { front: '/photos/depan-001.jpg', side: '/photos/samping-001.jpg', withDebtor: '/photos/debitur-001.jpg' },
-        photoTimestamps: { front: '2026-01-31T14:25:00', side: '2026-01-31T14:26:00', withDebtor: '2026-01-31T14:28:00' },
-        submissionDate: '2026-01-31T14:30:00',
-        status: 'Pending',
-    },
-    // FRAUD CASE - OLD PHOTOS
-    {
-        id: 'VR-002',
-        collectorId: '4',
-        collectorName: 'Andi Wijaya',
-        branch: 'KCP Bogor',
-        region: 'Jawa Barat',
-        loanId: '0023456789',
-        debtorName: 'Sri Rahayu',
-        debtorPhone: '081345678901',
-        collateralAddress: 'Jl. Pajajaran No. 120, Bogor',
-        problemDescription: 'Debitur tidak ditemui. Foto diambil dari minggu lalu.',
-        commitmentDate: '2026-02-10',
-        collateralStatus: 'Dihuni',
-        collateralCondition: 'Terawat',
-        hasElectricity: true,
-        hasWater: true,
-        facilitiesDistance: { school: true, mall: false, hospital: true, cityCenter: false },
-        isMarketable: true,
-        coordinates: '-6.5971,106.7972',
-        photoEvidence: { front: '/photos/depan-002.jpg', side: '/photos/samping-002.jpg', withDebtor: null },
-        photoTimestamps: { front: '2026-01-25T09:00:00', side: '2026-01-25T09:05:00', withDebtor: null }, // OLD!
-        submissionDate: '2026-02-01T10:00:00',
-        status: 'Pending',
-    },
-];
+// Initial visit reports - empty for production (data from database)
+const initialVisitReports: VisitReport[] = [];
 
-// Initial mock payment reports
-const initialPaymentReports: PaymentReport[] = [
-    {
-        id: 'PR-001',
-        collectorId: '3',
-        collectorName: 'Budi Santoso',
-        loanId: '0012345678',
-        debtorName: 'Ahmad Wijaya',
-        branch: 'KCP JAKARTA SELATAN',
-        timestamp: '2026-02-01T10:30:00',
-        paymentMethod: 'Virtual Account',
-        paymentStatus: 'full',
-        paidAmount: 5000000,
-        promiseAmount: 5000000,
-        evidencePhoto: '/evidence/transfer-001.jpg',
-        status: 'PENDING',
-    },
-    {
-        id: 'PR-002',
-        collectorId: '4',
-        collectorName: 'Andi Wijaya',
-        loanId: '0023456789',
-        debtorName: 'Dewi Lestari',
-        branch: 'KCP DEPOK',
-        timestamp: '2026-02-01T14:15:00',
-        paymentMethod: 'Transfer',
-        paymentStatus: 'partial',
-        paidAmount: 2500000,
-        promiseAmount: 5000000,
-        evidencePhoto: '/evidence/transfer-002.jpg',
-        status: 'PENDING',
-    },
-    {
-        id: 'PR-003',
-        collectorId: '5',
-        collectorName: 'Citra Dewi',
-        loanId: '0034567890',
-        debtorName: 'Siti Aminah',
-        branch: 'KCP DEPOK',
-        timestamp: '2026-01-31T09:45:00',
-        paymentMethod: 'Virtual Account',
-        paymentStatus: 'full',
-        paidAmount: 10000000,
-        promiseAmount: 10000000,
-        evidencePhoto: '/evidence/transfer-003.jpg',
-        status: 'MATCHED',
-        processedAt: '2026-01-31T11:00:00',
-    },
-];
+// Initial payment reports - empty for production (data from database)
+const initialPaymentReports: PaymentReport[] = [];
 
 // Context type
 interface ValidationContextType {
