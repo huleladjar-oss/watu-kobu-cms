@@ -2,44 +2,79 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
-// Comprehensive Asset interface matching Bank data standards (24 columns)
+// Comprehensive Asset interface matching Bank NPL data standards (24+ columns)
+// Includes backward-compatible alias fields for migration
 export interface Asset {
-    id: string;             // System ID (UUID)
+    id: string;                     // System ID (UUID)
 
-    // A. IDENTITAS DEBITUR
-    loanId: string;         // NOMOR ACCOUNT / ACCTNO
-    debtorName: string;     // NAMA DEBITUR
-    identityAddress: string;// ALAMAT KTP / alamat_dev
-    officeAddress: string;  // ALAMAT KANTOR
-    phone: string;          // NO TELEPON DEBITUR (HP1 + HP2)
-    officePhone: string;    // NO TELEPON KANTOR
+    // A. CORE FIELDS (Indonesian)
+    nomorAccount: string;           // NOMOR ACCOUNT
+    namaDebitur: string;            // NAMA DEBITUR
 
-    // B. EMERGENCY CONTACT
-    emergencyName: string;  // NAMA EMERGENCY KONTAK / nama_darurat
-    emergencyPhone: string; // NOMOR TELEPON EMERGENCY / HP_darurat
-    emergencyAddress: string;// ALAMAT EMERGENCY
+    // B. BRANCH INFO (Indonesian)
+    kantorCabang: string;           // KANTOR CABANG
+    kanwil: string;                 // KANWIL
+    kelolaanTerbitSpk: 'AKTIF' | 'PASIF'; // KELOLAAN TERBIT SPK
+    jenisKredit: string;            // JENIS KREDIT
 
-    // C. DATA KREDIT & AGUNAN
-    branch: string;         // KANTOR CABANG / CABANG
-    region: string;         // KANWIL / ARCOLL
-    spkStatus: 'AKTIF' | 'PASIF'; // KELOLAAN TERBIT SPK / kelolaan
-    creditType: string;     // JENIS KREDIT / JENIS_KREDIT01
-    collateralAddress: string; // ALAMAT AGUNAN / alamat_agunan
+    // C. ADDRESS (Indonesian)
+    alamatAgunan: string;           // ALAMAT AGUNAN
+    alamatKtpDebitur: string;       // ALAMAT KTP DEBITUR
+    alamatKantorDebitur: string;    // ALAMAT KANTOR DEBITUR
 
-    // D. FINANCIAL DATA
-    initialPlafond: number; // PLAFOND AWAL / PLAFON
-    realizationDate: string;// TANGGAL REALISASI
-    maturityDate: string;   // TANGGAL JATUH TEMPO
-    principalBalance: number; // SALDO POKOK (CBAL)
-    interestArrears: number;  // TUNGGAKAN BUNGA / tgk_bunga01
-    penaltyArrears: number;   // TUNGGAKAN DENDA / tgk_denda01
-    principalArrears: number; // TUNGGAKAN POKOK/ANGSURAN
-    totalArrears: number;     // TOTAL TUNGGAKAN / total_tgk
-    totalPayoff: number;      // LUNAS KREDIT / lunas_kredit
+    // D. CONTACT (Indonesian)
+    nomorHp1Debitur: string;        // NOMOR HP 1 DEBITUR
+    nomorHp2Debitur: string;        // NOMOR HP 2 DEBITUR
+    nomorTeleponKantor: string;     // NOMOR TELEPON KANTOR
 
-    // E. SYSTEM
+    // E. EMERGENCY CONTACT (Indonesian)
+    namaEmergencyKontak: string;    // NAMA EMERGENCY KONTAK
+    nomorTeleponEmergency: string;  // NOMOR TELEPON EMERGENCY KONTAK
+    alamatEmergencyKontak: string;  // ALAMAT EMERGENCY KONTAK
+
+    // F. FINANCIAL - Plafond & Dates (Indonesian)
+    plafondAwal: number;            // PLAFOND AWAL
+    tanggalRealisasi: string;       // TANGGAL REALISASI
+    tanggalJatuhTempo: string;      // TANGGAL JATUH TEMPO
+
+    // G. FINANCIAL - Balances & Arrears (Indonesian)
+    saldoPokok: number;             // SALDO POKOK / CBAL
+    tunggakanBunga: number;         // TUNGGAKAN BUNGA
+    tunggakanDenda: number;         // TUNGGAKAN DENDA
+    tunggakanAngsuran: number;      // TUNGGAKAN ANGSURAN
+    totalTunggakan: number;         // TOTAL TUNGGAKAN
+    lunasTunggakan: number;         // LUNAS TUNGGAKAN
+    lunasKredit: number;            // LUNAS KREDIT
+
+    // H. SYSTEM
     collectorId: string | null;
     lastUpdate: string;
+
+    // ===== BACKWARD-COMPATIBLE ALIAS FIELDS =====
+    // These mirror the Indonesian fields above for legacy code compatibility
+    loanId: string;                 // Alias: nomorAccount
+    debtorName: string;             // Alias: namaDebitur
+    branch: string;                 // Alias: kantorCabang
+    region: string;                 // Alias: kanwil
+    spkStatus: 'AKTIF' | 'PASIF';   // Alias: kelolaanTerbitSpk
+    creditType: string;             // Alias: jenisKredit
+    collateralAddress: string;      // Alias: alamatAgunan
+    identityAddress: string;        // Alias: alamatKtpDebitur
+    officeAddress: string;          // Alias: alamatKantorDebitur
+    phone: string;                  // Alias: nomorHp1Debitur
+    officePhone: string;            // Alias: nomorTeleponKantor
+    emergencyName: string;          // Alias: namaEmergencyKontak
+    emergencyPhone: string;         // Alias: nomorTeleponEmergency
+    emergencyAddress: string;       // Alias: alamatEmergencyKontak
+    initialPlafond: number;         // Alias: plafondAwal
+    realizationDate: string;        // Alias: tanggalRealisasi
+    maturityDate: string;           // Alias: tanggalJatuhTempo
+    principalBalance: number;       // Alias: saldoPokok
+    interestArrears: number;        // Alias: tunggakanBunga
+    penaltyArrears: number;         // Alias: tunggakanDenda
+    principalArrears: number;       // Alias: tunggakanAngsuran
+    totalArrears: number;           // Alias: totalTunggakan
+    totalPayoff: number;            // Alias: lunasKredit
 }
 
 // Collector type (for reference - data now fetched from /api/users?role=COLLECTOR)
@@ -59,7 +94,7 @@ interface AssetContextType {
     addAsset: (asset: Omit<Asset, 'id' | 'lastUpdate'>) => Promise<void>;
     importAssets: (newAssets: Omit<Asset, 'id' | 'lastUpdate'>[]) => Promise<number>;
     updateAsset: (id: string, updates: Partial<Asset>) => Promise<void>;
-    updateAssetBalance: (loanId: string, paymentAmount: number) => void;
+    updateAssetBalance: (nomorAccount: string, paymentAmount: number) => void;
     deleteAsset: (id: string) => Promise<void>;
     deleteBulkAssets: (ids: string[]) => Promise<number>;
     assignAsset: (assetId: string, collectorId: string) => Promise<void>;
@@ -172,12 +207,12 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     };
 
     // Update asset balance (local only for now)
-    const updateAssetBalance = (loanId: string, paymentAmount: number) => {
+    const updateAssetBalance = (nomorAccount: string, paymentAmount: number) => {
         setAssets(prev => prev.map(asset =>
-            asset.loanId === loanId
+            asset.nomorAccount === nomorAccount
                 ? {
                     ...asset,
-                    totalArrears: Math.max(0, asset.totalArrears - paymentAmount),
+                    totalTunggakan: Math.max(0, asset.totalTunggakan - paymentAmount),
                     lastUpdate: new Date().toISOString().split('T')[0]
                 }
                 : asset
@@ -311,9 +346,9 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     // Get asset statistics
     const getAssetStats = () => {
         const total = assets.length;
-        const totalArrears = assets.reduce((sum, a) => sum + a.totalArrears, 0);
-        const activeCount = assets.filter(a => a.spkStatus === 'AKTIF').length;
-        const passiveCount = assets.filter(a => a.spkStatus === 'PASIF').length;
+        const totalArrears = assets.reduce((sum, a) => sum + a.totalTunggakan, 0);
+        const activeCount = assets.filter(a => a.kelolaanTerbitSpk === 'AKTIF').length;
+        const passiveCount = assets.filter(a => a.kelolaanTerbitSpk === 'PASIF').length;
         const unassignedCount = assets.filter(a => a.collectorId === null).length;
 
         return {

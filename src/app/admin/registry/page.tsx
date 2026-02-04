@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Pencil, Trash2, X, Check, AlertTriangle, Filter, Upload, FileSpreadsheet, Loader2, Eye } from 'lucide-react';
+import { Search, Trash2, X, Check, AlertTriangle, Filter, Upload, FileSpreadsheet, Loader2, Eye } from 'lucide-react';
 import { useAssets, Asset } from '@/context/AssetContext';
 
 // Format Rupiah
@@ -11,66 +11,85 @@ function formatRupiah(amount: number): string {
 }
 
 // SPK Status options
-const spkStatusOptions: Asset['spkStatus'][] = ['AKTIF', 'PASIF'];
-
-// Branch options
-const branchOptions = ['KCP JAKARTA SELATAN', 'KCP JAKARTA BARAT', 'KCP JAKARTA TIMUR', 'KCP JAKARTA UTARA', 'KCP JAKARTA PUSAT', 'KCP BOGOR', 'KCP DEPOK', 'KCP TANGERANG', 'KCP BEKASI'];
-
-// Credit type options
-const creditTypeOptions = ['KPR', 'KMK', 'KUR', 'KI', 'KUPEDES'];
+const spkStatusOptions: Asset['kelolaanTerbitSpk'][] = ['AKTIF', 'PASIF'];
 
 // SPK Status badge styles
-const spkStatusStyles: Record<Asset['spkStatus'], string> = {
+const spkStatusStyles: Record<Asset['kelolaanTerbitSpk'], string> = {
     'AKTIF': 'bg-green-100 text-green-700 border-green-200',
     'PASIF': 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
 // ============================================
-// BANK CSV PARSER (24 Columns)
+// BANK CSV PARSER (25 Columns - Indonesian)
 // ============================================
 
 interface BankColumnMapping {
-    loanId: string | null; debtorName: string | null; identityAddress: string | null; officeAddress: string | null;
-    phone: string | null; phone2: string | null; officePhone: string | null; emergencyName: string | null; emergencyPhone: string | null;
-    branch: string | null; region: string | null; spkStatus: string | null; creditType: string | null; collateralAddress: string | null;
-    initialPlafond: string | null; realizationDate: string | null; maturityDate: string | null; principalBalance: string | null;
-    interestArrears: string | null; penaltyArrears: string | null; totalArrears: string | null; totalPayoff: string | null;
+    // Core
+    nomorAccount: string | null;
+    namaDebitur: string | null;
+    // Branch
+    kantorCabang: string | null;
+    kanwil: string | null;
+    kelolaanTerbitSpk: string | null;
+    jenisKredit: string | null;
+    // Address
+    alamatAgunan: string | null;
+    alamatKtpDebitur: string | null;
+    alamatKantorDebitur: string | null;
+    // Contact
+    nomorHp1Debitur: string | null;
+    nomorHp2Debitur: string | null;
+    nomorTeleponKantor: string | null;
+    // Emergency
+    namaEmergencyKontak: string | null;
+    nomorTeleponEmergency: string | null;
+    alamatEmergencyKontak: string | null;
+    // Financial
+    plafondAwal: string | null;
+    tanggalRealisasi: string | null;
+    tanggalJatuhTempo: string | null;
+    saldoPokok: string | null;
+    tunggakanBunga: string | null;
+    tunggakanDenda: string | null;
+    tunggakanAngsuran: string | null;
+    totalTunggakan: string | null;
+    lunasTunggakan: string | null;
+    lunasKredit: string | null;
 }
 
 const BANK_HEADER_MAPPINGS: Record<keyof BankColumnMapping, string[]> = {
-    loanId: ['ACCTNO', 'ACC', 'NO REK', 'NOREK', 'ACCOUNT'],
-    debtorName: ['NAMA DEBITUR', 'NAMA_DEBITUR', 'NAMA', 'DEBITUR'],
-    identityAddress: ['ALAMAT_DEV', 'ALAMAT KTP', 'ALAMAT DEBITUR', 'ALAMAT'],
-    officeAddress: ['ALAMAT_KANTOR', 'ALAMAT KANTOR'],
-    phone: ['HP1', 'NO HP', 'TELEPON', 'HP'],
-    phone2: ['HP2', 'HP 2'],
-    officePhone: ['TELP_KANTOR', 'TELEPON KANTOR'],
-    emergencyName: ['NAMA_DARURAT', 'NAMA DARURAT', 'EMERGENCY'],
-    emergencyPhone: ['HP_DARURAT', 'DARURAT', 'TELEPON DARURAT'],
-    branch: ['CABANG', 'BRANCH', 'KC'],
-    region: ['ARCOLL', 'KANWIL', 'REGION'],
-    spkStatus: ['KELOLAAN', 'STATUS', 'STATUS SPK'],
-    creditType: ['JENIS_KREDIT01', 'JENIS KREDIT', 'KREDIT'],
-    collateralAddress: ['ALAMAT_AGUNAN', 'ALAMAT AGUNAN'],
-    initialPlafond: ['PLAFON', 'PLAFOND', 'PLAFOND AWAL'],
-    realizationDate: ['TGL_REALISASI', 'TANGGAL REALISASI'],
-    maturityDate: ['TGL_JT', 'JATUH TEMPO'],
-    principalBalance: ['SALDO POKOK', 'CBAL', 'OS_POKOK'],
-    interestArrears: ['TGK_BUNGA01', 'TUNGGAKAN BUNGA'],
-    penaltyArrears: ['TGK_DENDA01', 'TUNGGAKAN DENDA'],
-    totalArrears: ['TOTAL_TGK', 'TOTAL TUNGGAKAN'],
-    totalPayoff: ['LUNAS_KREDIT', 'TOTAL LUNAS'],
+    nomorAccount: ['NOMOR ACCOUNT', 'ACCTNO', 'ACC', 'NO REK', 'NOREK', 'ACCOUNT'],
+    namaDebitur: ['NAMA DEBITUR', 'NAMA_DEBITUR', 'NAMA', 'DEBITUR'],
+    kantorCabang: ['KANTOR CABANG', 'CABANG', 'BRANCH', 'KC'],
+    kanwil: ['KANWIL', 'ARCOLL', 'REGION'],
+    kelolaanTerbitSpk: ['KELOLAAN TERBIT SPK', 'KELOLAAN', 'STATUS', 'STATUS SPK'],
+    jenisKredit: ['JENIS KREDIT', 'JENIS_KREDIT01', 'KREDIT'],
+    alamatAgunan: ['ALAMAT AGUNAN', 'ALAMAT_AGUNAN'],
+    alamatKtpDebitur: ['ALAMAT KTP DEBITUR', 'ALAMAT_DEV', 'ALAMAT KTP', 'ALAMAT'],
+    alamatKantorDebitur: ['ALAMAT KANTOR DEBITUR', 'ALAMAT_KANTOR', 'ALAMAT KANTOR'],
+    nomorHp1Debitur: ['NOMOR HP 1 DEBITUR', 'HP1', 'NO HP', 'TELEPON', 'HP'],
+    nomorHp2Debitur: ['NOMOR HP 2 DEBITUR', 'HP2', 'HP 2'],
+    nomorTeleponKantor: ['NOMOR TELEPON KANTOR', 'TELP_KANTOR', 'TELEPON KANTOR'],
+    namaEmergencyKontak: ['NAMA EMERGENCY KONTAK', 'NAMA_DARURAT', 'NAMA DARURAT', 'EMERGENCY'],
+    nomorTeleponEmergency: ['NOMOR TELEPON EMERGENCY KONTAK', 'HP_DARURAT', 'DARURAT', 'TELEPON DARURAT'],
+    alamatEmergencyKontak: ['ALAMAT EMERGENCY KONTAK', 'ALAMAT_DARURAT', 'ALAMAT DARURAT'],
+    plafondAwal: ['PLAFOND AWAL', 'PLAFON', 'PLAFOND'],
+    tanggalRealisasi: ['TANGGAL REALISASI', 'TGL_REALISASI'],
+    tanggalJatuhTempo: ['TANGGAL JATUH TEMPO', 'TGL_JT', 'JATUH TEMPO'],
+    saldoPokok: ['SALDO POKOK', 'CBAL', 'OS_POKOK'],
+    tunggakanBunga: ['TUNGGAKAN BUNGA', 'TGK_BUNGA01'],
+    tunggakanDenda: ['TUNGGAKAN DENDA', 'TGK_DENDA01'],
+    tunggakanAngsuran: ['TUNGGAKAN ANGSURAN', 'TGK_ANGSURAN'],
+    totalTunggakan: ['TOTAL TUNGGAKAN', 'TOTAL_TGK'],
+    lunasTunggakan: ['LUNAS TUNGGAKAN', 'LUNAS_TGK'],
+    lunasKredit: ['LUNAS KREDIT', 'LUNAS_KREDIT', 'TOTAL LUNAS'],
 };
 
 function parseAmount(value: string): number {
     if (!value) return 0;
-    const cleaned = value.replace(/[Rp\s.,]/gi, '').trim();
+    const cleaned = value.replace(/[Rp\s.]/gi, '').replace(',', '.').trim();
     const num = parseFloat(cleaned);
     return isNaN(num) ? 0 : num;
-}
-
-function generateAssetId(): string {
-    return `WK-${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
 function findColumn(headers: string[], possibleNames: string[]): string | null {
@@ -99,45 +118,75 @@ function parseCSV(content: string): { headers: string[]; rows: Record<string, st
     return { headers, rows };
 }
 
-function convertBankRowsToAssets(rows: Record<string, string>[], mapping: BankColumnMapping): Asset[] {
+function convertBankRowsToAssets(rows: Record<string, string>[], mapping: BankColumnMapping): Omit<Asset, 'id' | 'lastUpdate'>[] {
     return rows.filter((row) => {
-        const hasId = mapping.loanId && row[mapping.loanId]?.trim();
-        const hasName = mapping.debtorName && row[mapping.debtorName]?.trim();
+        const hasId = mapping.nomorAccount && row[mapping.nomorAccount]?.trim();
+        const hasName = mapping.namaDebitur && row[mapping.namaDebitur]?.trim();
         return hasId || hasName;
     }).map((row) => {
-        const phone1 = mapping.phone ? row[mapping.phone] || '' : '';
-        const phone2 = mapping.phone2 ? row[mapping.phone2] || '' : '';
-        const combinedPhone = [phone1, phone2].filter(Boolean).join(' / ');
-        const spkRaw = mapping.spkStatus ? row[mapping.spkStatus]?.toUpperCase() || '' : '';
-        const spkStatus: Asset['spkStatus'] = spkRaw.includes('AKTIF') ? 'AKTIF' : 'PASIF';
+        const spkRaw = mapping.kelolaanTerbitSpk ? row[mapping.kelolaanTerbitSpk]?.toUpperCase() || '' : '';
+        const kelolaanTerbitSpk: Asset['kelolaanTerbitSpk'] = spkRaw.includes('AKTIF') ? 'AKTIF' : 'PASIF';
+
+        // Indonesian Fields
+        const nomorAccount = mapping.nomorAccount ? row[mapping.nomorAccount] || '' : '';
+        const namaDebitur = mapping.namaDebitur ? row[mapping.namaDebitur] || 'Unknown' : 'Unknown';
+        const kantorCabang = mapping.kantorCabang ? row[mapping.kantorCabang] || '' : '';
+        const kanwil = mapping.kanwil ? row[mapping.kanwil] || '' : '';
+        const jenisKredit = mapping.jenisKredit ? row[mapping.jenisKredit] || '' : '';
+        const alamatAgunan = mapping.alamatAgunan ? row[mapping.alamatAgunan] || '' : '';
+        const alamatKtpDebitur = mapping.alamatKtpDebitur ? row[mapping.alamatKtpDebitur] || '' : '';
+        const alamatKantorDebitur = mapping.alamatKantorDebitur ? row[mapping.alamatKantorDebitur] || '' : '';
+        const nomorHp1Debitur = mapping.nomorHp1Debitur ? row[mapping.nomorHp1Debitur] || '' : '';
+        const nomorHp2Debitur = mapping.nomorHp2Debitur ? row[mapping.nomorHp2Debitur] || '' : '';
+        const nomorTeleponKantor = mapping.nomorTeleponKantor ? row[mapping.nomorTeleponKantor] || '' : '';
+        const namaEmergencyKontak = mapping.namaEmergencyKontak ? row[mapping.namaEmergencyKontak] || '' : '';
+        const nomorTeleponEmergency = mapping.nomorTeleponEmergency ? row[mapping.nomorTeleponEmergency] || '' : '';
+        const alamatEmergencyKontak = mapping.alamatEmergencyKontak ? row[mapping.alamatEmergencyKontak] || '' : '';
+        const plafondAwal = mapping.plafondAwal ? parseAmount(row[mapping.plafondAwal]) : 0;
+        const tanggalRealisasi = mapping.tanggalRealisasi ? row[mapping.tanggalRealisasi] || '' : '';
+        const tanggalJatuhTempo = mapping.tanggalJatuhTempo ? row[mapping.tanggalJatuhTempo] || '' : '';
+        const saldoPokok = mapping.saldoPokok ? parseAmount(row[mapping.saldoPokok]) : 0;
+        const tunggakanBunga = mapping.tunggakanBunga ? parseAmount(row[mapping.tunggakanBunga]) : 0;
+        const tunggakanDenda = mapping.tunggakanDenda ? parseAmount(row[mapping.tunggakanDenda]) : 0;
+        const tunggakanAngsuran = mapping.tunggakanAngsuran ? parseAmount(row[mapping.tunggakanAngsuran]) : 0;
+        const totalTunggakan = mapping.totalTunggakan ? parseAmount(row[mapping.totalTunggakan]) : 0;
+        const lunasTunggakan = mapping.lunasTunggakan ? parseAmount(row[mapping.lunasTunggakan]) : 0;
+        const lunasKredit = mapping.lunasKredit ? parseAmount(row[mapping.lunasKredit]) : 0;
 
         return {
-            id: generateAssetId(),
-            loanId: mapping.loanId ? row[mapping.loanId] || '' : '',
-            debtorName: mapping.debtorName ? row[mapping.debtorName] || '' : 'Unknown',
-            identityAddress: mapping.identityAddress ? row[mapping.identityAddress] || '' : '',
-            officeAddress: mapping.officeAddress ? row[mapping.officeAddress] || '' : '',
-            phone: combinedPhone,
-            officePhone: mapping.officePhone ? row[mapping.officePhone] || '' : '',
-            emergencyName: mapping.emergencyName ? row[mapping.emergencyName] || '' : '',
-            emergencyPhone: mapping.emergencyPhone ? row[mapping.emergencyPhone] || '' : '',
-            emergencyAddress: '',
-            branch: mapping.branch ? row[mapping.branch] || '' : '',
-            region: mapping.region ? row[mapping.region] || '' : '',
-            spkStatus,
-            creditType: mapping.creditType ? row[mapping.creditType] || '' : '',
-            collateralAddress: mapping.collateralAddress ? row[mapping.collateralAddress] || '' : '',
-            initialPlafond: mapping.initialPlafond ? parseAmount(row[mapping.initialPlafond]) : 0,
-            realizationDate: mapping.realizationDate ? row[mapping.realizationDate] || '' : '',
-            maturityDate: mapping.maturityDate ? row[mapping.maturityDate] || '' : '',
-            principalBalance: mapping.principalBalance ? parseAmount(row[mapping.principalBalance]) : 0,
-            interestArrears: mapping.interestArrears ? parseAmount(row[mapping.interestArrears]) : 0,
-            penaltyArrears: mapping.penaltyArrears ? parseAmount(row[mapping.penaltyArrears]) : 0,
-            principalArrears: 0,
-            totalArrears: mapping.totalArrears ? parseAmount(row[mapping.totalArrears]) : 0,
-            totalPayoff: mapping.totalPayoff ? parseAmount(row[mapping.totalPayoff]) : 0,
+            // Indonesian Fields
+            nomorAccount, namaDebitur, kantorCabang, kanwil, kelolaanTerbitSpk, jenisKredit,
+            alamatAgunan, alamatKtpDebitur, alamatKantorDebitur,
+            nomorHp1Debitur, nomorHp2Debitur, nomorTeleponKantor,
+            namaEmergencyKontak, nomorTeleponEmergency, alamatEmergencyKontak,
+            plafondAwal, tanggalRealisasi, tanggalJatuhTempo,
+            saldoPokok, tunggakanBunga, tunggakanDenda, tunggakanAngsuran, totalTunggakan, lunasTunggakan, lunasKredit,
             collectorId: null,
-            lastUpdate: new Date().toISOString().split('T')[0],
+
+            // Backward-compatible English Aliases
+            loanId: nomorAccount,
+            debtorName: namaDebitur,
+            branch: kantorCabang,
+            region: kanwil,
+            spkStatus: kelolaanTerbitSpk,
+            creditType: jenisKredit,
+            collateralAddress: alamatAgunan,
+            identityAddress: alamatKtpDebitur,
+            officeAddress: alamatKantorDebitur,
+            phone: nomorHp1Debitur,
+            officePhone: nomorTeleponKantor,
+            emergencyName: namaEmergencyKontak,
+            emergencyPhone: nomorTeleponEmergency,
+            emergencyAddress: alamatEmergencyKontak,
+            initialPlafond: plafondAwal,
+            realizationDate: tanggalRealisasi,
+            maturityDate: tanggalJatuhTempo,
+            principalBalance: saldoPokok,
+            interestArrears: tunggakanBunga,
+            penaltyArrears: tunggakanDenda,
+            principalArrears: tunggakanAngsuran,
+            totalArrears: totalTunggakan,
+            totalPayoff: lunasKredit,
         };
     });
 }
@@ -152,64 +201,76 @@ function AssetDetailModal({ asset, onClose }: { asset: Asset; onClose: () => voi
             <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="bg-slate-800 px-6 py-4 flex items-center justify-between sticky top-0">
                     <div>
-                        <h3 className="text-lg font-bold text-white">{asset.debtorName}</h3>
-                        <p className="text-slate-300 text-sm">Account: {asset.loanId}</p>
+                        <h3 className="text-lg font-bold text-white">{asset.namaDebitur}</h3>
+                        <p className="text-slate-300 text-sm">Account: {asset.nomorAccount}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full transition-colors cursor-pointer">
                         <X size={20} className="text-white" />
                     </button>
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Debtor Info */}
+                    {/* Branch Info */}
                     <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                        <h4 className="text-sm font-bold text-blue-800 mb-3 uppercase tracking-wide">Identitas Debitur</h4>
+                        <h4 className="text-sm font-bold text-blue-800 mb-3 uppercase tracking-wide">Data Cabang</h4>
                         <div className="space-y-2 text-sm">
-                            <div><span className="text-slate-500">Nama:</span> <span className="font-medium text-slate-900">{asset.debtorName}</span></div>
-                            <div><span className="text-slate-500">Alamat KTP:</span> <span className="text-slate-700">{asset.identityAddress || '-'}</span></div>
-                            <div><span className="text-slate-500">Telepon:</span> <span className="text-slate-700">{asset.phone || '-'}</span></div>
-                            <div><span className="text-slate-500">Alamat Kantor:</span> <span className="text-slate-700">{asset.officeAddress || '-'}</span></div>
+                            <div><span className="text-slate-500">Kantor Cabang:</span> <span className="font-medium text-slate-900">{asset.kantorCabang || '-'}</span></div>
+                            <div><span className="text-slate-500">Kanwil:</span> <span className="text-slate-700">{asset.kanwil || '-'}</span></div>
+                            <div><span className="text-slate-500">Jenis Kredit:</span> <span className="text-slate-700">{asset.jenisKredit || '-'}</span></div>
+                            <div><span className="text-slate-500">Status SPK:</span> <span className={`px-2 py-0.5 rounded text-xs font-semibold ${spkStatusStyles[asset.kelolaanTerbitSpk]}`}>{asset.kelolaanTerbitSpk}</span></div>
                         </div>
                     </div>
-                    {/* Credit Info */}
+                    {/* Identitas Debitur */}
                     <div className="bg-green-50 rounded-xl p-4 border border-green-100">
-                        <h4 className="text-sm font-bold text-green-800 mb-3 uppercase tracking-wide">Data Kredit</h4>
+                        <h4 className="text-sm font-bold text-green-800 mb-3 uppercase tracking-wide">Identitas Debitur</h4>
                         <div className="space-y-2 text-sm">
-                            <div><span className="text-slate-500">Cabang:</span> <span className="font-medium text-slate-900">{asset.branch || '-'}</span></div>
-                            <div><span className="text-slate-500">Kanwil:</span> <span className="text-slate-700">{asset.region || '-'}</span></div>
-                            <div><span className="text-slate-500">Jenis Kredit:</span> <span className="text-slate-700">{asset.creditType || '-'}</span></div>
-                            <div><span className="text-slate-500">Status SPK:</span> <span className={`px-2 py-0.5 rounded text-xs font-semibold ${spkStatusStyles[asset.spkStatus]}`}>{asset.spkStatus}</span></div>
-                            <div><span className="text-slate-500">Tgl Realisasi:</span> <span className="text-slate-700">{asset.realizationDate || '-'}</span></div>
-                            <div><span className="text-slate-500">Jatuh Tempo:</span> <span className="text-slate-700">{asset.maturityDate || '-'}</span></div>
+                            <div><span className="text-slate-500">Nama:</span> <span className="font-medium text-slate-900">{asset.namaDebitur}</span></div>
+                            <div><span className="text-slate-500">Alamat KTP:</span> <span className="text-slate-700">{asset.alamatKtpDebitur || '-'}</span></div>
+                            <div><span className="text-slate-500">HP 1:</span> <span className="text-slate-700">{asset.nomorHp1Debitur || '-'}</span></div>
+                            <div><span className="text-slate-500">HP 2:</span> <span className="text-slate-700">{asset.nomorHp2Debitur || '-'}</span></div>
                         </div>
                     </div>
-                    {/* Financials */}
-                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-                        <h4 className="text-sm font-bold text-amber-800 mb-3 uppercase tracking-wide">Data Finansial</h4>
+                    {/* Data Kantor */}
+                    <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                        <h4 className="text-sm font-bold text-purple-800 mb-3 uppercase tracking-wide">Data Kantor</h4>
                         <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-slate-500">Plafond Awal:</span> <span className="font-bold text-slate-900">{formatRupiah(asset.initialPlafond)}</span></div>
-                            <div className="flex justify-between"><span className="text-slate-500">Saldo Pokok:</span> <span className="font-medium text-slate-700">{formatRupiah(asset.principalBalance)}</span></div>
-                            <hr className="border-amber-200" />
-                            <div className="flex justify-between"><span className="text-slate-500">Tunggakan Bunga:</span> <span className="text-red-600">{formatRupiah(asset.interestArrears)}</span></div>
-                            <div className="flex justify-between"><span className="text-slate-500">Tunggakan Denda:</span> <span className="text-red-600">{formatRupiah(asset.penaltyArrears)}</span></div>
-                            <div className="flex justify-between"><span className="text-slate-500">Tunggakan Pokok:</span> <span className="text-red-600">{formatRupiah(asset.principalArrears)}</span></div>
-                            <hr className="border-amber-200" />
-                            <div className="flex justify-between"><span className="text-slate-600 font-semibold">TOTAL TUNGGAKAN:</span> <span className="font-bold text-red-700 text-lg">{formatRupiah(asset.totalArrears)}</span></div>
-                            <div className="flex justify-between"><span className="text-slate-500">Lunas Kredit:</span> <span className="font-medium text-slate-700">{formatRupiah(asset.totalPayoff)}</span></div>
+                            <div><span className="text-slate-500">Alamat Kantor:</span> <span className="text-slate-700">{asset.alamatKantorDebitur || '-'}</span></div>
+                            <div><span className="text-slate-500">Telepon Kantor:</span> <span className="text-slate-700">{asset.nomorTeleponKantor || '-'}</span></div>
                         </div>
                     </div>
-                    {/* Emergency Contact */}
+                    {/* Kontak Darurat */}
                     <div className="bg-red-50 rounded-xl p-4 border border-red-100">
                         <h4 className="text-sm font-bold text-red-800 mb-3 uppercase tracking-wide">Kontak Darurat</h4>
                         <div className="space-y-2 text-sm">
-                            <div><span className="text-slate-500">Nama:</span> <span className="font-medium text-slate-900">{asset.emergencyName || '-'}</span></div>
-                            <div><span className="text-slate-500">Telepon:</span> <span className="text-slate-700">{asset.emergencyPhone || '-'}</span></div>
-                            <div><span className="text-slate-500">Alamat:</span> <span className="text-slate-700">{asset.emergencyAddress || '-'}</span></div>
+                            <div><span className="text-slate-500">Nama:</span> <span className="font-medium text-slate-900">{asset.namaEmergencyKontak || '-'}</span></div>
+                            <div><span className="text-slate-500">Telepon:</span> <span className="text-slate-700">{asset.nomorTeleponEmergency || '-'}</span></div>
+                            <div><span className="text-slate-500">Alamat:</span> <span className="text-slate-700">{asset.alamatEmergencyKontak || '-'}</span></div>
                         </div>
-                        <div className="mt-4 pt-3 border-t border-red-200">
-                            <h5 className="text-xs font-semibold text-slate-500 mb-2">ALAMAT AGUNAN</h5>
-                            <p className={`text-sm ${asset.collateralAddress === 'Kredit Tanpa Agunan' ? 'text-slate-500 italic' : 'text-slate-700'}`}>
-                                {asset.collateralAddress || '-'}
-                            </p>
+                    </div>
+                    {/* Data Agunan */}
+                    <div className="bg-orange-50 rounded-xl p-4 border border-orange-100 md:col-span-2">
+                        <h4 className="text-sm font-bold text-orange-800 mb-3 uppercase tracking-wide">Alamat Agunan</h4>
+                        <p className="text-sm text-slate-700">{asset.alamatAgunan || '-'}</p>
+                    </div>
+                    {/* Financials */}
+                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 md:col-span-2">
+                        <h4 className="text-sm font-bold text-amber-800 mb-3 uppercase tracking-wide">Data Finansial</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div><span className="text-slate-500 block">Plafond Awal</span><span className="font-bold text-slate-900">{formatRupiah(asset.plafondAwal)}</span></div>
+                            <div><span className="text-slate-500 block">Saldo Pokok</span><span className="font-medium text-slate-700">{formatRupiah(asset.saldoPokok)}</span></div>
+                            <div><span className="text-slate-500 block">Tgl Realisasi</span><span className="text-slate-700">{asset.tanggalRealisasi || '-'}</span></div>
+                            <div><span className="text-slate-500 block">Jatuh Tempo</span><span className="text-slate-700">{asset.tanggalJatuhTempo || '-'}</span></div>
+                        </div>
+                        <hr className="my-4 border-amber-200" />
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div><span className="text-slate-500 block">Tunggakan Bunga</span><span className="text-red-600">{formatRupiah(asset.tunggakanBunga)}</span></div>
+                            <div><span className="text-slate-500 block">Tunggakan Denda</span><span className="text-red-600">{formatRupiah(asset.tunggakanDenda)}</span></div>
+                            <div><span className="text-slate-500 block">Tunggakan Angsuran</span><span className="text-red-600">{formatRupiah(asset.tunggakanAngsuran)}</span></div>
+                            <div><span className="text-slate-500 block font-semibold">TOTAL TUNGGAKAN</span><span className="font-bold text-red-700 text-lg">{formatRupiah(asset.totalTunggakan)}</span></div>
+                        </div>
+                        <hr className="my-4 border-amber-200" />
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div><span className="text-slate-500 block">Lunas Tunggakan</span><span className="font-medium text-slate-700">{formatRupiah(asset.lunasTunggakan)}</span></div>
+                            <div><span className="text-slate-500 block">Lunas Kredit</span><span className="font-medium text-slate-700">{formatRupiah(asset.lunasKredit)}</span></div>
                         </div>
                     </div>
                 </div>
@@ -222,10 +283,10 @@ function AssetDetailModal({ asset, onClose }: { asset: Asset; onClose: () => voi
 // CSV IMPORT MODAL
 // ============================================
 
-function CSVImportModal({ onClose, onImport }: { onClose: () => void; onImport: (assets: Asset[]) => void }) {
+function CSVImportModal({ onClose, onImport }: { onClose: () => void; onImport: (assets: Omit<Asset, 'id' | 'lastUpdate'>[]) => void }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [parsedData, setParsedData] = useState<{ assets: Asset[]; originalRowCount: number } | null>(null);
+    const [parsedData, setParsedData] = useState<{ assets: Omit<Asset, 'id' | 'lastUpdate'>[]; originalRowCount: number } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,31 +297,36 @@ function CSVImportModal({ onClose, onImport }: { onClose: () => void; onImport: 
             const content = await file.text();
             const { headers, rows } = parseCSV(content);
             if (rows.length === 0) throw new Error('File tidak mengandung data.');
+
             const mapping: BankColumnMapping = {
-                loanId: findColumn(headers, BANK_HEADER_MAPPINGS.loanId),
-                debtorName: findColumn(headers, BANK_HEADER_MAPPINGS.debtorName),
-                identityAddress: findColumn(headers, BANK_HEADER_MAPPINGS.identityAddress),
-                officeAddress: findColumn(headers, BANK_HEADER_MAPPINGS.officeAddress),
-                phone: findColumn(headers, BANK_HEADER_MAPPINGS.phone),
-                phone2: findColumn(headers, BANK_HEADER_MAPPINGS.phone2),
-                officePhone: findColumn(headers, BANK_HEADER_MAPPINGS.officePhone),
-                emergencyName: findColumn(headers, BANK_HEADER_MAPPINGS.emergencyName),
-                emergencyPhone: findColumn(headers, BANK_HEADER_MAPPINGS.emergencyPhone),
-                branch: findColumn(headers, BANK_HEADER_MAPPINGS.branch),
-                region: findColumn(headers, BANK_HEADER_MAPPINGS.region),
-                spkStatus: findColumn(headers, BANK_HEADER_MAPPINGS.spkStatus),
-                creditType: findColumn(headers, BANK_HEADER_MAPPINGS.creditType),
-                collateralAddress: findColumn(headers, BANK_HEADER_MAPPINGS.collateralAddress),
-                initialPlafond: findColumn(headers, BANK_HEADER_MAPPINGS.initialPlafond),
-                realizationDate: findColumn(headers, BANK_HEADER_MAPPINGS.realizationDate),
-                maturityDate: findColumn(headers, BANK_HEADER_MAPPINGS.maturityDate),
-                principalBalance: findColumn(headers, BANK_HEADER_MAPPINGS.principalBalance),
-                interestArrears: findColumn(headers, BANK_HEADER_MAPPINGS.interestArrears),
-                penaltyArrears: findColumn(headers, BANK_HEADER_MAPPINGS.penaltyArrears),
-                totalArrears: findColumn(headers, BANK_HEADER_MAPPINGS.totalArrears),
-                totalPayoff: findColumn(headers, BANK_HEADER_MAPPINGS.totalPayoff),
+                nomorAccount: findColumn(headers, BANK_HEADER_MAPPINGS.nomorAccount),
+                namaDebitur: findColumn(headers, BANK_HEADER_MAPPINGS.namaDebitur),
+                kantorCabang: findColumn(headers, BANK_HEADER_MAPPINGS.kantorCabang),
+                kanwil: findColumn(headers, BANK_HEADER_MAPPINGS.kanwil),
+                kelolaanTerbitSpk: findColumn(headers, BANK_HEADER_MAPPINGS.kelolaanTerbitSpk),
+                jenisKredit: findColumn(headers, BANK_HEADER_MAPPINGS.jenisKredit),
+                alamatAgunan: findColumn(headers, BANK_HEADER_MAPPINGS.alamatAgunan),
+                alamatKtpDebitur: findColumn(headers, BANK_HEADER_MAPPINGS.alamatKtpDebitur),
+                alamatKantorDebitur: findColumn(headers, BANK_HEADER_MAPPINGS.alamatKantorDebitur),
+                nomorHp1Debitur: findColumn(headers, BANK_HEADER_MAPPINGS.nomorHp1Debitur),
+                nomorHp2Debitur: findColumn(headers, BANK_HEADER_MAPPINGS.nomorHp2Debitur),
+                nomorTeleponKantor: findColumn(headers, BANK_HEADER_MAPPINGS.nomorTeleponKantor),
+                namaEmergencyKontak: findColumn(headers, BANK_HEADER_MAPPINGS.namaEmergencyKontak),
+                nomorTeleponEmergency: findColumn(headers, BANK_HEADER_MAPPINGS.nomorTeleponEmergency),
+                alamatEmergencyKontak: findColumn(headers, BANK_HEADER_MAPPINGS.alamatEmergencyKontak),
+                plafondAwal: findColumn(headers, BANK_HEADER_MAPPINGS.plafondAwal),
+                tanggalRealisasi: findColumn(headers, BANK_HEADER_MAPPINGS.tanggalRealisasi),
+                tanggalJatuhTempo: findColumn(headers, BANK_HEADER_MAPPINGS.tanggalJatuhTempo),
+                saldoPokok: findColumn(headers, BANK_HEADER_MAPPINGS.saldoPokok),
+                tunggakanBunga: findColumn(headers, BANK_HEADER_MAPPINGS.tunggakanBunga),
+                tunggakanDenda: findColumn(headers, BANK_HEADER_MAPPINGS.tunggakanDenda),
+                tunggakanAngsuran: findColumn(headers, BANK_HEADER_MAPPINGS.tunggakanAngsuran),
+                totalTunggakan: findColumn(headers, BANK_HEADER_MAPPINGS.totalTunggakan),
+                lunasTunggakan: findColumn(headers, BANK_HEADER_MAPPINGS.lunasTunggakan),
+                lunasKredit: findColumn(headers, BANK_HEADER_MAPPINGS.lunasKredit),
             };
-            if (!mapping.debtorName && !mapping.loanId) throw new Error('Tidak dapat menemukan kolom NAMA atau ACCTNO.');
+
+            if (!mapping.namaDebitur && !mapping.nomorAccount) throw new Error('Tidak dapat menemukan kolom NAMA DEBITUR atau NOMOR ACCOUNT.');
             const assets = convertBankRowsToAssets(rows, mapping);
             if (assets.length === 0) throw new Error('Tidak ada data valid.');
             setParsedData({ assets, originalRowCount: rows.length });
@@ -318,9 +384,9 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
 // ============================================
 
 export default function RegistryPage() {
-    const { assets, addAsset, importAssets, updateAsset, deleteAsset, deleteBulkAssets } = useAssets();
+    const { assets, importAssets, deleteAsset, deleteBulkAssets } = useAssets();
     const [searchQuery, setSearchQuery] = useState('');
-    const [spkFilter, setSpkFilter] = useState<Asset['spkStatus'] | 'all'>('all');
+    const [spkFilter, setSpkFilter] = useState<Asset['kelolaanTerbitSpk'] | 'all'>('all');
     const [showImportModal, setShowImportModal] = useState(false);
     const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
     const [deletingAsset, setDeletingAsset] = useState<Asset | null>(null);
@@ -329,14 +395,14 @@ export default function RegistryPage() {
 
     const filteredAssets = useMemo(() => {
         return assets.filter((asset) => {
-            const matchesSearch = searchQuery === '' || asset.debtorName.toLowerCase().includes(searchQuery.toLowerCase()) || asset.loanId.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesStatus = spkFilter === 'all' || asset.spkStatus === spkFilter;
+            const matchesSearch = searchQuery === '' || asset.namaDebitur.toLowerCase().includes(searchQuery.toLowerCase()) || asset.nomorAccount.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesStatus = spkFilter === 'all' || asset.kelolaanTerbitSpk === spkFilter;
             return matchesSearch && matchesStatus;
         });
     }, [assets, searchQuery, spkFilter]);
 
-    const handleDeleteAsset = async () => { if (deletingAsset) { await deleteAsset(deletingAsset.id); showToast(`Asset ${deletingAsset.id} dihapus`, 'success'); setDeletingAsset(null); } };
-    const handleImportAssets = async (newAssets: Asset[]) => { const count = await importAssets(newAssets); setShowImportModal(false); showToast(count > 0 ? `${count} aset diimport` : 'Semua data duplikat', count > 0 ? 'success' : 'error'); };
+    const handleDeleteAsset = async () => { if (deletingAsset) { await deleteAsset(deletingAsset.id); showToast(`Asset ${deletingAsset.nomorAccount} dihapus`, 'success'); setDeletingAsset(null); } };
+    const handleImportAssets = async (newAssets: Omit<Asset, 'id' | 'lastUpdate'>[]) => { const count = await importAssets(newAssets); setShowImportModal(false); showToast(count > 0 ? `${count} aset diimport` : 'Semua data duplikat', count > 0 ? 'success' : 'error'); };
     const handleBulkDelete = async () => { if (selectedIds.length > 0 && window.confirm(`Hapus ${selectedIds.length} aset?`)) { await deleteBulkAssets(selectedIds); showToast(`${selectedIds.length} aset dihapus`, 'success'); setSelectedIds([]); } };
     const toggleSelectAsset = (id: string) => { setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]); };
     const toggleSelectAll = () => { const ids = filteredAssets.map((a) => a.id); setSelectedIds((prev) => ids.every((id) => prev.includes(id)) ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])]); };
@@ -357,19 +423,19 @@ export default function RegistryPage() {
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1"><Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input type="text" placeholder="Cari nama atau no rekening..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-slate-900" /></div>
-                    <div className="flex items-center gap-2"><Filter size={18} className="text-slate-400" /><select value={spkFilter} onChange={(e) => setSpkFilter(e.target.value as Asset['spkStatus'] | 'all')} className="px-4 py-2.5 border border-slate-300 rounded-lg cursor-pointer"><option value="all">Semua Status</option>{spkStatusOptions.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
+                    <div className="flex items-center gap-2"><Filter size={18} className="text-slate-400" /><select value={spkFilter} onChange={(e) => setSpkFilter(e.target.value as Asset['kelolaanTerbitSpk'] | 'all')} className="px-4 py-2.5 border border-slate-300 rounded-lg cursor-pointer"><option value="all">Semua Status</option>{spkStatusOptions.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
                 </div>
                 <div className="mt-3 text-sm text-slate-500">Menampilkan <strong>{filteredAssets.length}</strong> dari <strong>{assets.length}</strong> aset</div>
             </div>
-            {/* Compact Table */}
+            {/* Table - 6 Core Columns */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead><tr className="bg-slate-50 border-b border-slate-200">
                             <th className="px-4 py-4 w-12"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 accent-blue-600 cursor-pointer" /></th>
-                            <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Account No</th>
+                            <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Nomor Account</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Nama Debitur</th>
-                            <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Cabang</th>
+                            <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Kantor Cabang</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Total Tunggakan</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase text-center">Status SPK</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase text-center">Actions</th>
@@ -380,11 +446,11 @@ export default function RegistryPage() {
                             ) : filteredAssets.map((asset) => (
                                 <tr key={asset.id} className={`hover:bg-slate-50 ${selectedIds.includes(asset.id) ? 'bg-blue-50' : ''}`}>
                                     <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.includes(asset.id)} onChange={() => toggleSelectAsset(asset.id)} className="w-4 h-4 accent-blue-600 cursor-pointer" /></td>
-                                    <td className="px-4 py-3 font-mono text-sm text-slate-600">{asset.loanId}</td>
-                                    <td className="px-4 py-3"><p className="font-medium text-slate-900">{asset.debtorName}</p></td>
-                                    <td className="px-4 py-3 text-sm text-slate-600">{asset.branch || '-'}</td>
-                                    <td className="px-4 py-3 text-right font-bold text-red-600">{formatRupiah(asset.totalArrears)}</td>
-                                    <td className="px-4 py-3 text-center"><span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${spkStatusStyles[asset.spkStatus]}`}>{asset.spkStatus}</span></td>
+                                    <td className="px-4 py-3 font-mono text-sm text-slate-600">{asset.nomorAccount}</td>
+                                    <td className="px-4 py-3"><p className="font-medium text-slate-900">{asset.namaDebitur}</p></td>
+                                    <td className="px-4 py-3 text-sm text-slate-600">{asset.kantorCabang || '-'}</td>
+                                    <td className="px-4 py-3 text-right font-bold text-red-600">{formatRupiah(asset.totalTunggakan)}</td>
+                                    <td className="px-4 py-3 text-center"><span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${spkStatusStyles[asset.kelolaanTerbitSpk]}`}>{asset.kelolaanTerbitSpk}</span></td>
                                     <td className="px-4 py-3"><div className="flex items-center justify-center gap-1">
                                         <button onClick={() => setViewingAsset(asset)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer" title="View"><Eye size={18} /></button>
                                         <button onClick={() => setDeletingAsset(asset)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer" title="Delete"><Trash2 size={18} /></button>
@@ -403,7 +469,7 @@ export default function RegistryPage() {
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><AlertTriangle size={32} className="text-red-600" /></div>
                         <h3 className="text-xl font-bold text-slate-900 mb-2">Hapus Asset?</h3>
-                        <p className="text-slate-600 mb-6">Asset <strong>{deletingAsset.id}</strong> - {deletingAsset.debtorName}</p>
+                        <p className="text-slate-600 mb-6">Account <strong>{deletingAsset.nomorAccount}</strong> - {deletingAsset.namaDebitur}</p>
                         <div className="flex gap-3"><button onClick={() => setDeletingAsset(null)} className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg font-semibold cursor-pointer">Batal</button><button onClick={handleDeleteAsset} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-semibold cursor-pointer">Hapus</button></div>
                     </div>
                 </div>

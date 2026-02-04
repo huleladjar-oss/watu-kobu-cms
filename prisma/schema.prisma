@@ -72,66 +72,72 @@ model Branch {
 }
 
 // =============================================================================
-// ASSET MODEL (Debitur)
+// ASSET MODEL (Debitur NPL)
 // =============================================================================
 
 model Asset {
-  id                String      @id @default(cuid())
-  loanId            String      @unique // Loan ID from Bank
-  debtorName        String      // Nama Debitur
+  id                      String      @id @default(cuid())
   
-  // Address & Contact
-  identityAddress   String?     // Alamat KTP
-  officeAddress     String?     // Alamat Kantor
-  phone             String?
-  officePhone       String?
+  // Core Fields
+  nomorAccount            String      @unique // NOMOR ACCOUNT
+  namaDebitur             String              // NAMA DEBITUR
+  
+  // Branch Info
+  kantorCabang            String?             // KANTOR CABANG
+  kanwil                  String?             // KANWIL
+  kelolaanTerbitSpk       String      @default("AKTIF") // KELOLAAN TERBIT SPK (AKTIF/PASIF)
+  jenisKredit             String?             // JENIS KREDIT
+  
+  // Address
+  alamatAgunan            String?             // ALAMAT AGUNAN
+  alamatKtpDebitur        String?             // ALAMAT KTP DEBITUR
+  alamatKantorDebitur     String?             // ALAMAT KANTOR DEBITUR
+  
+  // Contact
+  nomorHp1Debitur         String?             // NOMOR HP 1 DEBITUR
+  nomorHp2Debitur         String?             // NOMOR HP 2 DEBITUR
+  nomorTeleponKantor      String?             // NOMOR TELEPON KANTOR
   
   // Emergency Contact
-  emergencyName     String?
-  emergencyPhone    String?
-  emergencyAddress  String?
+  namaEmergencyKontak     String?             // NAMA EMERGENCY KONTAK
+  nomorTeleponEmergency   String?             // NOMOR TELEPON EMERGENCY KONTAK
+  alamatEmergencyKontak   String?             // ALAMAT EMERGENCY KONTAK
   
-  // Location
-  locationLat       Float?
-  locationLng       Float?
-  vehiclePlate      String?
+  // Financial - Plafond & Dates
+  plafondAwal             Float       @default(0)   // PLAFOND AWAL
+  tanggalRealisasi        String?                   // TANGGAL REALISASI
+  tanggalJatuhTempo       String?                   // TANGGAL JATUH TEMPO
   
-  // Credit Info
-  spkStatus         String      @default("AKTIF") // AKTIF, PASIF
-  creditType        String?
-  collateralAddress String?
+  // Financial - Balances & Arrears
+  saldoPokok              Float       @default(0)   // SALDO POKOK / CBAL
+  tunggakanBunga          Float       @default(0)   // TUNGGAKAN BUNGA
+  tunggakanDenda          Float       @default(0)   // TUNGGAKAN DENDA
+  tunggakanAngsuran       Float       @default(0)   // TUNGGAKAN ANGSURAN
+  totalTunggakan          Float       @default(0)   // TOTAL TUNGGAKAN
+  lunasTunggakan          Float       @default(0)   // LUNAS TUNGGAKAN
+  lunasKredit             Float       @default(0)   // LUNAS KREDIT
   
-  // Financial Data
-  initialPlafond    Float       @default(0)
-  realizationDate   DateTime?
-  maturityDate      DateTime?
-  principalBalance  Float       @default(0)
-  interestArrears   Float       @default(0)
-  penaltyArrears    Float       @default(0)
-  principalArrears  Float       @default(0)
-  totalArrears      Float       @default(0)
-  totalPayoff       Float       @default(0)
+  // System Fields
+  status                  AssetStatus @default(LANCAR)
+  branchId                String?
+  branch                  Branch?     @relation(fields: [branchId], references: [id])
   
-  status            AssetStatus @default(LANCAR)
-  branchId          String?
-  branch            Branch?     @relation(fields: [branchId], references: [id])
+  // Direct collector assignment
+  collectorId             String?
+  collector               User?       @relation(fields: [collectorId], references: [id])
   
-  // Direct collector assignment for simpler queries
-  collectorId       String?
-  collector         User?       @relation(fields: [collectorId], references: [id])
-  
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
 
   // Relations
-  assignments       Assignment[]
-  visitReports      VisitReport[]
-  paymentReports    PaymentReport[]
+  assignments             Assignment[]
+  visitReports            VisitReport[]
+  paymentReports          PaymentReport[]
 
-  @@index([loanId])
-  @@index([debtorName])
-  @@index([phone])
-  @@index([vehiclePlate])
+  @@index([nomorAccount])
+  @@index([namaDebitur])
+  @@index([nomorHp1Debitur])
+  @@index([kantorCabang])
   @@index([status])
   @@index([branchId])
   @@index([collectorId])
