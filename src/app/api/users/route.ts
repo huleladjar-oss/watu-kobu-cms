@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { Role, Prisma } from '@prisma/client';
 
 // GET /api/users - Fetch users, optionally filtered by role
 export async function GET(request: NextRequest) {
@@ -7,13 +8,16 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const role = searchParams.get('role');
 
-        // Build where clause
-        const where: { role?: string; isActive?: boolean } = {
-            isActive: true, // Only active users
+        // Build where clause with proper Prisma types
+        const where: Prisma.UserWhereInput = {
+            isActive: true,
         };
 
         if (role) {
-            where.role = role.toUpperCase();
+            const upperRole = role.toUpperCase() as Role;
+            if (['ADMIN', 'MANAGER', 'COLLECTOR'].includes(upperRole)) {
+                where.role = upperRole;
+            }
         }
 
         const users = await prisma.user.findMany({
@@ -27,7 +31,6 @@ export async function GET(request: NextRequest) {
                 area: true,
                 isActive: true,
                 createdAt: true,
-                // Count assignments
                 _count: {
                     select: {
                         assignments: true,

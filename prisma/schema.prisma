@@ -53,6 +53,7 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
+  assignedAssets Asset[]        // Assets directly assigned to this collector
   assignments    Assignment[]
   visitReports   VisitReport[]
   paymentReports PaymentReport[]
@@ -75,23 +76,49 @@ model Branch {
 // =============================================================================
 
 model Asset {
-  id                String      @id // Loan ID (Manual Input dari Bank)
-  name              String      // Nama Debitur
-  address           String
-  locationLat       Float?      // Koordinat Rumah
-  locationLng       Float?
+  id                String      @id @default(cuid())
+  loanId            String      @unique // Loan ID from Bank
+  debtorName        String      // Nama Debitur
+  
+  // Address & Contact
+  identityAddress   String?     // Alamat KTP
+  officeAddress     String?     // Alamat Kantor
   phone             String?
-  vehiclePlate      String?     // Plat Nomor Kendaraan
+  officePhone       String?
+  
+  // Emergency Contact
+  emergencyName     String?
+  emergencyPhone    String?
+  emergencyAddress  String?
+  
+  // Location
+  locationLat       Float?
+  locationLng       Float?
+  vehiclePlate      String?
+  
+  // Credit Info
+  spkStatus         String      @default("AKTIF") // AKTIF, PASIF
+  creditType        String?
+  collateralAddress String?
   
   // Financial Data
-  principalDebt     Float       // Pokok Hutang
-  totalArrears      Float       // Total Tunggakan
-  interestArrears   Float       @default(0) // Tunggakan Bunga
-  penaltyArrears    Float       @default(0) // Tunggakan Denda
+  initialPlafond    Float       @default(0)
+  realizationDate   DateTime?
+  maturityDate      DateTime?
+  principalBalance  Float       @default(0)
+  interestArrears   Float       @default(0)
+  penaltyArrears    Float       @default(0)
+  principalArrears  Float       @default(0)
+  totalArrears      Float       @default(0)
+  totalPayoff       Float       @default(0)
   
   status            AssetStatus @default(LANCAR)
-  branchId          String
-  branch            Branch      @relation(fields: [branchId], references: [id])
+  branchId          String?
+  branch            Branch?     @relation(fields: [branchId], references: [id])
+  
+  // Direct collector assignment for simpler queries
+  collectorId       String?
+  collector         User?       @relation(fields: [collectorId], references: [id])
   
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -101,11 +128,13 @@ model Asset {
   visitReports      VisitReport[]
   paymentReports    PaymentReport[]
 
-  @@index([name])
+  @@index([loanId])
+  @@index([debtorName])
   @@index([phone])
   @@index([vehiclePlate])
   @@index([status])
   @@index([branchId])
+  @@index([collectorId])
 }
 
 // =============================================================================

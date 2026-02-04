@@ -38,8 +38,9 @@ export async function GET(request: NextRequest) {
         const collectorId = searchParams.get('collectorId');
         const unassignedOnly = searchParams.get('unassigned') === 'true';
 
-        // Build where clause
-        const where: { collectorId?: string | null } = {};
+        // Build where clause dynamically
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const where: any = {};
 
         if (collectorId) {
             where.collectorId = collectorId;

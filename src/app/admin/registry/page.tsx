@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Pencil, Trash2, X, Check, AlertTriangle, Filter, Upload, FileSpreadsheet, Loader2, Eye } from 'lucide-react';
-import { useAssets, collectors, NewAssetInput, Asset } from '@/context/AssetContext';
+import { useAssets, Asset } from '@/context/AssetContext';
 
 // Format Rupiah
 function formatRupiah(amount: number): string {
@@ -335,9 +335,9 @@ export default function RegistryPage() {
         });
     }, [assets, searchQuery, spkFilter]);
 
-    const handleDeleteAsset = () => { if (deletingAsset) { deleteAsset(deletingAsset.id); showToast(`Asset ${deletingAsset.id} dihapus`, 'success'); setDeletingAsset(null); } };
-    const handleImportAssets = (newAssets: Asset[]) => { const count = importAssets(newAssets); setShowImportModal(false); showToast(count > 0 ? `${count} aset diimport` : 'Semua data duplikat', count > 0 ? 'success' : 'error'); };
-    const handleBulkDelete = () => { if (selectedIds.length > 0 && window.confirm(`Hapus ${selectedIds.length} aset?`)) { deleteBulkAssets(selectedIds); showToast(`${selectedIds.length} aset dihapus`, 'success'); setSelectedIds([]); } };
+    const handleDeleteAsset = async () => { if (deletingAsset) { await deleteAsset(deletingAsset.id); showToast(`Asset ${deletingAsset.id} dihapus`, 'success'); setDeletingAsset(null); } };
+    const handleImportAssets = async (newAssets: Asset[]) => { const count = await importAssets(newAssets); setShowImportModal(false); showToast(count > 0 ? `${count} aset diimport` : 'Semua data duplikat', count > 0 ? 'success' : 'error'); };
+    const handleBulkDelete = async () => { if (selectedIds.length > 0 && window.confirm(`Hapus ${selectedIds.length} aset?`)) { await deleteBulkAssets(selectedIds); showToast(`${selectedIds.length} aset dihapus`, 'success'); setSelectedIds([]); } };
     const toggleSelectAsset = (id: string) => { setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]); };
     const toggleSelectAll = () => { const ids = filteredAssets.map((a) => a.id); setSelectedIds((prev) => ids.every((id) => prev.includes(id)) ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])]); };
     const showToast = (message: string, type: 'success' | 'error') => { setToast({ message, type }); setTimeout(() => setToast(null), 3000); };

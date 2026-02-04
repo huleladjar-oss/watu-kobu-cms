@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Bulk update assets
+        // Bulk update assets with collectorId
         const result = await prisma.asset.updateMany({
             where: {
                 id: { in: assetIds },
@@ -43,18 +43,27 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // Create assignment records
-        const assignmentData = assetIds.map((assetId: string) => ({
-            assetId,
-            collectorId,
-            assignedBy: 'system', // TODO: Get from session
-            status: 'ACTIVE' as const,
-        }));
+        // Create assignment records if needed
+        for (const assetId of assetIds) {
+            // Check if assignment already exists
+            const existing = await prisma.assignment.findFirst({
+                where: {
+                    assetId,
+                    userId: collectorId,
+                    status: 'ACTIVE',
+                },
+            });
 
-        await prisma.assignment.createMany({
-            data: assignmentData,
-            skipDuplicates: true,
-        });
+            if (!existing) {
+                await prisma.assignment.create({
+                    data: {
+                        assetId,
+                        userId: collectorId,
+                        status: 'ACTIVE',
+                    },
+                });
+            }
+        }
 
         return NextResponse.json({
             success: true,
