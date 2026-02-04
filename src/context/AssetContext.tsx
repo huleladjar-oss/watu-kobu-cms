@@ -42,20 +42,16 @@ export interface Asset {
     lastUpdate: string;
 }
 
-// Collector type
+// Collector type (for reference - data now fetched from /api/users?role=COLLECTOR)
 export interface Collector {
     id: string;
     name: string;
+    email?: string;
     area: string;
     assignedCount: number;
 }
 
-// Mock collectors data
-export const collectors: Collector[] = [
-    { id: '3', name: 'Budi Santoso', area: 'Jakarta Selatan', assignedCount: 0 },
-    { id: '4', name: 'Andi Wijaya', area: 'Bogor', assignedCount: 0 },
-    { id: '5', name: 'Citra Dewi', area: 'Depok', assignedCount: 0 },
-];
+// NOTE: Mock collectors removed - now fetched from database via API
 
 // Initial mock assets with comprehensive structure
 const initialAssets: Asset[] = [

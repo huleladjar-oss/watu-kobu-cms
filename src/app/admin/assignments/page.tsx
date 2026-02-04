@@ -1,9 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, Wallet, AlertTriangle, X, Check, Filter, ChevronDown, UserPlus } from 'lucide-react';
-import { useAssets, collectors, Asset } from '@/context/AssetContext';
+import { Users, Wallet, AlertTriangle, X, Check, Filter, ChevronDown, UserPlus, Loader2 } from 'lucide-react';
+import { useAssets, Asset } from '@/context/AssetContext';
+
+// Collector type from API
+interface Collector {
+    id: string;
+    name: string;
+    email: string;
+    area: string;
+    assignedCount: number;
+}
 
 // Format Rupiah
 function formatRupiah(amount: number, compact: boolean = false): string {
@@ -22,7 +31,7 @@ function SPKBadge({ status }: { status: Asset['spkStatus'] }) {
 
 // Collector Card with Workload
 function CollectorWorkloadCard({ collector, assets, isSelected, onClick, maxCases = 50 }: {
-    collector: typeof collectors[0]; assets: Asset[]; isSelected: boolean; onClick: () => void; maxCases?: number
+    collector: Collector; assets: Asset[]; isSelected: boolean; onClick: () => void; maxCases?: number
 }) {
     const assignedAssets = assets.filter((a) => a.collectorId === collector.id);
     const currentLoad = assignedAssets.length;
@@ -60,7 +69,7 @@ function CollectorWorkloadCard({ collector, assets, isSelected, onClick, maxCase
 }
 
 // Assignment Modal
-function AssignmentModal({ selectedAssets, onClose, onConfirm, assets }: { selectedAssets: Asset[]; onClose: () => void; onConfirm: (collectorId: string) => void; assets: Asset[] }) {
+function AssignmentModal({ selectedAssets, onClose, onConfirm, assets, collectors }: { selectedAssets: Asset[]; onClose: () => void; onConfirm: (collectorId: string) => void; assets: Asset[]; collectors: Collector[] }) {
     const [selectedCollector, setSelectedCollector] = useState<string | null>(null);
     const totalValue = selectedAssets.reduce((sum, a) => sum + a.totalArrears, 0);
 
@@ -71,7 +80,7 @@ function AssignmentModal({ selectedAssets, onClose, onConfirm, assets }: { selec
             const bLoad = assets.filter((asset) => asset.collectorId === b.id).length;
             return aLoad - bLoad;
         });
-    }, [assets]);
+    }, [assets, collectors]);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -88,22 +97,26 @@ function AssignmentModal({ selectedAssets, onClose, onConfirm, assets }: { selec
                 </div>
                 <div className="p-4 max-h-80 overflow-y-auto">
                     <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Pilih Kolektor (Diurutkan: Beban Terendah)</p>
-                    <div className="space-y-2">
-                        {sortedCollectors.map((collector, idx) => {
-                            const load = assets.filter((a) => a.collectorId === collector.id).length;
-                            return (
-                                <button key={collector.id} onClick={() => setSelectedCollector(collector.id)} className={`w-full text-left p-3 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-between ${selectedCollector === collector.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${selectedCollector === collector.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                                            {collector.name.split(' ').map((n) => n[0]).join('')}
+                    {sortedCollectors.length === 0 ? (
+                        <p className="text-sm text-slate-400 text-center py-4">Tidak ada kolektor tersedia</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {sortedCollectors.map((collector, idx) => {
+                                const load = assets.filter((a) => a.collectorId === collector.id).length;
+                                return (
+                                    <button key={collector.id} onClick={() => setSelectedCollector(collector.id)} className={`w-full text-left p-3 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-between ${selectedCollector === collector.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${selectedCollector === collector.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                                {collector.name.split(' ').map((n) => n[0]).join('')}
+                                            </div>
+                                            <div><p className="font-semibold text-slate-900">{collector.name}</p><p className="text-xs text-slate-500">{collector.area} • {load} kasus</p></div>
                                         </div>
-                                        <div><p className="font-semibold text-slate-900">{collector.name}</p><p className="text-xs text-slate-500">{collector.area} • {load} kasus</p></div>
-                                    </div>
-                                    {idx === 0 && <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Recommended</span>}
-                                </button>
-                            );
-                        })}
-                    </div>
+                                        {idx === 0 && <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Recommended</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
                 <div className="px-4 py-4 bg-slate-50 border-t border-slate-200 flex gap-3">
                     <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-lg cursor-pointer">Batal</button>
@@ -127,10 +140,32 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 }
 
 export default function AssignmentsPage() {
-    const { assets, getUnassignedAssets, assignAsset, assignBulkAssets } = useAssets();
+    const { assets, getUnassignedAssets, assignBulkAssets } = useAssets();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
+
+    // Real collectors from API
+    const [collectors, setCollectors] = useState<Collector[]>([]);
+    const [collectorsLoading, setCollectorsLoading] = useState(true);
+
+    // Fetch collectors from database
+    useEffect(() => {
+        const fetchCollectors = async () => {
+            try {
+                const response = await fetch('/api/users?role=COLLECTOR');
+                const data = await response.json();
+                if (data.success) {
+                    setCollectors(data.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch collectors:', error);
+            } finally {
+                setCollectorsLoading(false);
+            }
+        };
+        fetchCollectors();
+    }, []);
 
     // Filters
     const [branchFilter, setBranchFilter] = useState<string>('all');
@@ -282,17 +317,25 @@ export default function AssignmentsPage() {
                 <div className="lg:col-span-3">
                     <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 sticky top-4">
                         <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Collector Availability</h3>
-                        <div className="space-y-3">
-                            {collectors.map((collector) => (
-                                <CollectorWorkloadCard
-                                    key={collector.id}
-                                    collector={collector}
-                                    assets={assets}
-                                    isSelected={false}
-                                    onClick={() => { }}
-                                />
-                            ))}
-                        </div>
+                        {collectorsLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 size={24} className="animate-spin text-blue-600" />
+                            </div>
+                        ) : collectors.length === 0 ? (
+                            <p className="text-sm text-slate-400 text-center py-8">Tidak ada kolektor terdaftar</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {collectors.map((collector) => (
+                                    <CollectorWorkloadCard
+                                        key={collector.id}
+                                        collector={collector}
+                                        assets={assets}
+                                        isSelected={false}
+                                        onClick={() => { }}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -311,7 +354,7 @@ export default function AssignmentsPage() {
             )}
 
             {/* Modal */}
-            {showModal && selectedAssets.length > 0 && <AssignmentModal selectedAssets={selectedAssets} onClose={() => { setShowModal(false); setSelectedIds([]); }} onConfirm={handleAssign} assets={assets} />}
+            {showModal && selectedAssets.length > 0 && <AssignmentModal selectedAssets={selectedAssets} onClose={() => { setShowModal(false); setSelectedIds([]); }} onConfirm={handleAssign} assets={assets} collectors={collectors} />}
 
             {/* Toast */}
             {toast && <Toast message={toast} onClose={() => setToast(null)} />}
