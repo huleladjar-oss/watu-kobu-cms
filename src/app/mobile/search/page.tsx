@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, SlidersHorizontal, Car, MapPin, Building, Bell, Home, History, User } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, Building, Bell, X, Check } from 'lucide-react';
 import { useAssets, Asset } from '@/context/AssetContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
@@ -14,13 +14,6 @@ const formatRupiah = (amount: number) => {
         currency: 'IDR',
         minimumFractionDigits: 0,
     }).format(amount);
-};
-
-// Check if promise date is today
-const isPromiseToday = (promiseDate?: string) => {
-    if (!promiseDate) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return promiseDate === today;
 };
 
 // Status Badge Component
@@ -51,7 +44,6 @@ function StatusBadge({ spkStatus }: { spkStatus: 'AKTIF' | 'PASIF' }) {
 
 // Result Card Component
 function ResultCard({ asset, onClick }: { asset: Asset; onClick: () => void }) {
-
     return (
         <article
             onClick={onClick}
@@ -93,6 +85,115 @@ function ResultCard({ asset, onClick }: { asset: Asset; onClick: () => void }) {
     );
 }
 
+// Filter Modal Component
+function FilterModal({
+    isOpen,
+    onClose,
+    activeFilter,
+    onApplyFilter,
+    sortBy,
+    onSortChange
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    activeFilter: string;
+    onApplyFilter: (filter: string) => void;
+    sortBy: string;
+    onSortChange: (sort: string) => void;
+}) {
+    const [tempFilter, setTempFilter] = useState(activeFilter);
+    const [tempSort, setTempSort] = useState(sortBy);
+
+    useEffect(() => {
+        setTempFilter(activeFilter);
+        setTempSort(sortBy);
+    }, [activeFilter, sortBy]);
+
+    if (!isOpen) return null;
+
+    const filterOptions = [
+        { id: 'all', label: 'Semua Aset' },
+        { id: 'macet', label: 'Macet Berat (> Rp 5 Juta)' },
+        { id: 'janji_bayar', label: 'Ada Tunggakan' },
+        { id: 'lancar', label: 'Lancar' },
+    ];
+
+    const sortOptions = [
+        { id: 'arrears_desc', label: 'Tunggakan Tertinggi' },
+        { id: 'arrears_asc', label: 'Tunggakan Terendah' },
+        { id: 'name_asc', label: 'Nama A-Z' },
+        { id: 'name_desc', label: 'Nama Z-A' },
+    ];
+
+    const handleApply = () => {
+        onApplyFilter(tempFilter);
+        onSortChange(tempSort);
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+            <div className="bg-white w-full max-w-md rounded-t-3xl p-6 pb-10 animate-slide-up">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-slate-900">Filter & Urutkan</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full">
+                        <X size={20} className="text-slate-500" />
+                    </button>
+                </div>
+
+                {/* Filter Section */}
+                <div className="mb-6">
+                    <p className="text-sm font-semibold text-slate-500 mb-3">Status Aset</p>
+                    <div className="space-y-2">
+                        {filterOptions.map(opt => (
+                            <button
+                                key={opt.id}
+                                onClick={() => setTempFilter(opt.id)}
+                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${tempFilter === opt.id
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                    }`}
+                            >
+                                <span className="font-medium">{opt.label}</span>
+                                {tempFilter === opt.id && <Check size={18} className="text-blue-600" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Sort Section */}
+                <div className="mb-8">
+                    <p className="text-sm font-semibold text-slate-500 mb-3">Urutkan Berdasarkan</p>
+                    <div className="space-y-2">
+                        {sortOptions.map(opt => (
+                            <button
+                                key={opt.id}
+                                onClick={() => setTempSort(opt.id)}
+                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${tempSort === opt.id
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                    }`}
+                            >
+                                <span className="font-medium">{opt.label}</span>
+                                {tempSort === opt.id && <Check size={18} className="text-blue-600" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Apply Button */}
+                <button
+                    onClick={handleApply}
+                    className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all"
+                >
+                    Terapkan Filter
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function MobileSearchPage() {
     const router = useRouter();
     const { assets } = useAssets();
@@ -101,6 +202,8 @@ export default function MobileSearchPage() {
 
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [sortBy, setSortBy] = useState('arrears_desc');
 
     // Auto-focus search input on mount
     useEffect(() => {
@@ -131,21 +234,39 @@ export default function MobileSearchPage() {
 
     // Apply quick filter
     const filteredAssets = useMemo(() => {
-        if (activeFilter === 'all') return searchedAssets;
+        let result = searchedAssets;
 
-        return searchedAssets.filter(asset => {
-            switch (activeFilter) {
-                case 'macet':
-                    return asset.spkStatus === 'AKTIF' && asset.totalArrears > 5000000; // Heavy delinquent
-                case 'janji_bayar':
-                    return asset.spkStatus === 'AKTIF' && asset.totalArrears > 1000000; // Has arrears
-                case 'lancar':
-                    return asset.spkStatus === 'PASIF';
+        if (activeFilter !== 'all') {
+            result = result.filter(asset => {
+                switch (activeFilter) {
+                    case 'macet':
+                        return asset.spkStatus === 'AKTIF' && asset.totalArrears > 5000000;
+                    case 'janji_bayar':
+                        return asset.spkStatus === 'AKTIF' && asset.totalArrears > 1000000;
+                    case 'lancar':
+                        return asset.spkStatus === 'PASIF';
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Apply sorting
+        return [...result].sort((a, b) => {
+            switch (sortBy) {
+                case 'arrears_desc':
+                    return b.totalArrears - a.totalArrears;
+                case 'arrears_asc':
+                    return a.totalArrears - b.totalArrears;
+                case 'name_asc':
+                    return a.debtorName.localeCompare(b.debtorName);
+                case 'name_desc':
+                    return b.debtorName.localeCompare(a.debtorName);
                 default:
-                    return true;
+                    return 0;
             }
         });
-    }, [searchedAssets, activeFilter]);
+    }, [searchedAssets, activeFilter, sortBy]);
 
     // Smart routing: high arrears -> collect, else -> task
     const handleCardClick = (asset: Asset) => {
@@ -166,8 +287,8 @@ export default function MobileSearchPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-28">
-            {/* Header */}
-            <header className="bg-[#0F172A] pt-14 pb-12 px-5 sticky top-0 z-20 rounded-b-[2.5rem] shadow-md relative overflow-hidden">
+            {/* Header - Non-sticky for better mobile UX */}
+            <header className="bg-[#0F172A] pt-14 pb-6 px-5 rounded-b-3xl shadow-md relative overflow-hidden">
                 <div className="flex justify-between items-center relative z-10">
                     <div className="flex flex-col">
                         <p className="text-blue-200 text-xs font-medium tracking-wide mb-0.5">FIELD COLLECTOR PRO</p>
@@ -175,7 +296,6 @@ export default function MobileSearchPage() {
                     </div>
                     <Link href="/mobile/notifications" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm transition-all border border-white/5 text-white relative">
                         <Bell size={20} />
-                        {/* Notification badge - shows when there are unread notifications */}
                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#0F172A]"></span>
                     </Link>
                 </div>
@@ -186,11 +306,11 @@ export default function MobileSearchPage() {
                 </div>
             </header>
 
-            {/* Floating Search Bar */}
-            <div className="px-5 -mt-7 mb-4 relative z-10">
+            {/* Search Bar - Below header, not overlapping */}
+            <div className="px-5 py-4">
                 <div className="flex gap-3 items-center">
                     {/* Search Input */}
-                    <div className="flex-1 bg-white rounded-xl shadow-lg h-14 flex items-center px-4 border border-slate-100">
+                    <div className="flex-1 bg-white rounded-xl shadow-md h-14 flex items-center px-4 border border-slate-200">
                         <Search size={20} className="text-slate-400 mr-3 shrink-0" />
                         <input
                             ref={searchInputRef}
@@ -201,8 +321,11 @@ export default function MobileSearchPage() {
                             className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400 text-sm font-medium h-full"
                         />
                     </div>
-                    {/* Filter Button */}
-                    <button className="w-14 h-14 bg-[#2563EB] rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center text-white shrink-0 active:scale-95 transition-transform">
+                    {/* Filter Button - Now Functional */}
+                    <button
+                        onClick={() => setShowFilterModal(true)}
+                        className="w-14 h-14 bg-[#2563EB] rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center text-white shrink-0 active:scale-95 transition-transform"
+                    >
                         <SlidersHorizontal size={22} />
                     </button>
                 </div>
@@ -210,7 +333,7 @@ export default function MobileSearchPage() {
 
             {/* Quick Filter Chips */}
             <div
-                className="px-5 mb-6 overflow-x-auto"
+                className="px-5 mb-4 overflow-x-auto"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 <div className="flex gap-3 items-center pb-1">
@@ -280,6 +403,16 @@ export default function MobileSearchPage() {
                     </>
                 )}
             </main>
+
+            {/* Filter Modal */}
+            <FilterModal
+                isOpen={showFilterModal}
+                onClose={() => setShowFilterModal(false)}
+                activeFilter={activeFilter}
+                onApplyFilter={setActiveFilter}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+            />
         </div>
     );
 }
