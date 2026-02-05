@@ -187,7 +187,7 @@ export default function MobileSearchPage() {
             </header>
 
             {/* Floating Search Bar */}
-            <div className="px-5 -mt-7 mb-4 relative z-30">
+            <div className="px-5 -mt-7 mb-4 relative z-10">
                 <div className="flex gap-3 items-center">
                     {/* Search Input */}
                     <div className="flex-1 bg-white rounded-xl shadow-lg h-14 flex items-center px-4 border border-slate-100">
