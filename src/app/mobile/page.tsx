@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useAssets } from '@/context/AssetContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, ChevronRight, MapPin, TrendingUp, Target, Handshake } from 'lucide-react';
+import { Bell, ChevronRight, MapPin, TrendingUp, Target, Handshake } from 'lucide-react';
 
 // PKWT KPI Standards
 const DAILY_VISIT_TARGET = 15;
@@ -69,15 +69,15 @@ export default function MobileHomePage() {
         const monthlyTarget = HARDCODED_MONTHLY_TARGET;
         // Alternative: const monthlyTarget = totalPortfolio * MONTHLY_TARGET_PERCENTAGE;
 
-        // 3. Collected Amount (MOCK - Replace with real payment data)
+        // 3. Collected Amount (TODO: Replace with real payment data from database)
         // In production: Sum payments received this month for this collector
-        const collectedAmount = totalPortfolio * 0.15; // Mock: 15% collected
+        const collectedAmount = 0; // Real data will come from PaymentReport
 
-        // 4. Daily Visits (MOCK - Replace with validation report count)
-        const dailyVisits = 12; // Mock: 12 visits today
+        // 4. Daily Visits (TODO: Replace with validation report count from database)
+        const dailyVisits = 0; // Real data will come from VisitReport
 
-        // 5. Promise to Pay Today (MOCK - First 3 tasks for demo)
-        const promiseToPayCount = 3; // Mock count
+        // 5. Promise to Pay Today (TODO: Count from VisitReport with janji bayar)
+        const promiseToPayCount = 0; // Real data from reports with paymentPromise
 
         // Calculate progress percentage
         const collectionProgress = monthlyTarget > 0 ? Math.min((collectedAmount / monthlyTarget) * 100, 100) : 0;
@@ -153,13 +153,14 @@ export default function MobileHomePage() {
                             <p className="text-xs text-slate-400 mb-1">{getTodayFormatted()}</p>
                             <h1 className="text-2xl font-bold">Halo, {user.name}</h1>
                         </div>
-                        <button
-                            onClick={handleLogout}
-                            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-                            title="Logout"
+                        <Link
+                            href="/mobile/notifications"
+                            className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
+                            title="Notifikasi"
                         >
-                            <LogOut size={18} />
-                        </button>
+                            <Bell size={18} />
+                            {/* Notification badge - can show unread count */}
+                        </Link>
                     </div>
                 </div>
 
