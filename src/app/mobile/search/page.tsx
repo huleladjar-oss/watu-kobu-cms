@@ -132,63 +132,71 @@ function FilterModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-            <div className="bg-white w-full max-w-md rounded-t-3xl p-6 pb-10 animate-slide-up">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-slate-900">Filter & Urutkan</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={onClose}>
+            <div
+                className="bg-white w-full max-w-md rounded-t-2xl shadow-2xl flex flex-col max-h-[70vh]"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header - Fixed */}
+                <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
+                    <h3 className="text-lg font-bold text-slate-900">Filter & Urutkan</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full -mr-2">
                         <X size={20} className="text-slate-500" />
                     </button>
                 </div>
 
-                {/* Filter Section */}
-                <div className="mb-6">
-                    <p className="text-sm font-semibold text-slate-500 mb-3">Status Aset</p>
-                    <div className="space-y-2">
-                        {filterOptions.map(opt => (
-                            <button
-                                key={opt.id}
-                                onClick={() => setTempFilter(opt.id)}
-                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${tempFilter === opt.id
-                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                                    }`}
-                            >
-                                <span className="font-medium">{opt.label}</span>
-                                {tempFilter === opt.id && <Check size={18} className="text-blue-600" />}
-                            </button>
-                        ))}
+                {/* Scrollable Content */}
+                <div className="overflow-y-auto p-4 flex-1">
+                    {/* Filter Section */}
+                    <div className="mb-4">
+                        <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Status Aset</p>
+                        <div className="space-y-1.5">
+                            {filterOptions.map(opt => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => setTempFilter(opt.id)}
+                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all text-sm ${tempFilter === opt.id
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-slate-200 bg-white text-slate-700'
+                                        }`}
+                                >
+                                    <span className="font-medium">{opt.label}</span>
+                                    {tempFilter === opt.id && <Check size={16} className="text-blue-600" />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Sort Section */}
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Urutkan</p>
+                        <div className="space-y-1.5">
+                            {sortOptions.map(opt => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => setTempSort(opt.id)}
+                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all text-sm ${tempSort === opt.id
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-slate-200 bg-white text-slate-700'
+                                        }`}
+                                >
+                                    <span className="font-medium">{opt.label}</span>
+                                    {tempSort === opt.id && <Check size={16} className="text-blue-600" />}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* Sort Section */}
-                <div className="mb-8">
-                    <p className="text-sm font-semibold text-slate-500 mb-3">Urutkan Berdasarkan</p>
-                    <div className="space-y-2">
-                        {sortOptions.map(opt => (
-                            <button
-                                key={opt.id}
-                                onClick={() => setTempSort(opt.id)}
-                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${tempSort === opt.id
-                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                                    }`}
-                            >
-                                <span className="font-medium">{opt.label}</span>
-                                {tempSort === opt.id && <Check size={18} className="text-blue-600" />}
-                            </button>
-                        ))}
-                    </div>
+                {/* Apply Button - Fixed at bottom */}
+                <div className="p-4 border-t border-slate-100 shrink-0 bg-white">
+                    <button
+                        onClick={handleApply}
+                        className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all"
+                    >
+                        Terapkan Filter
+                    </button>
                 </div>
-
-                {/* Apply Button */}
-                <button
-                    onClick={handleApply}
-                    className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all"
-                >
-                    Terapkan Filter
-                </button>
             </div>
         </div>
     );
