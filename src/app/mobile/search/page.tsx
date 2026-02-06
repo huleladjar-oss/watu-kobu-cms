@@ -134,65 +134,60 @@ function FilterModal({
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={onClose}>
             <div
-                className="bg-white w-full max-w-md rounded-t-2xl shadow-2xl flex flex-col max-h-[70vh]"
+                className="bg-white w-full max-w-md rounded-t-2xl shadow-2xl"
+                style={{ maxHeight: '50vh' }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header - Fixed */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
-                    <h3 className="text-lg font-bold text-slate-900">Filter & Urutkan</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full -mr-2">
-                        <X size={20} className="text-slate-500" />
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <h3 className="text-base font-bold text-slate-900">Filter & Urutkan</h3>
+                    <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-full">
+                        <X size={18} className="text-slate-500" />
                     </button>
                 </div>
 
-                {/* Scrollable Content */}
-                <div className="overflow-y-auto p-4 flex-1">
-                    {/* Filter Section */}
-                    <div className="mb-4">
-                        <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Status Aset</p>
-                        <div className="space-y-1.5">
-                            {filterOptions.map(opt => (
-                                <button
-                                    key={opt.id}
-                                    onClick={() => setTempFilter(opt.id)}
-                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all text-sm ${tempFilter === opt.id
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-slate-200 bg-white text-slate-700'
-                                        }`}
-                                >
-                                    <span className="font-medium">{opt.label}</span>
-                                    {tempFilter === opt.id && <Check size={16} className="text-blue-600" />}
-                                </button>
-                            ))}
-                        </div>
+                {/* Content - Compact chips */}
+                <div className="px-4 py-3" style={{ overscrollBehavior: 'contain' }}>
+                    {/* Filter Section - horizontal chips */}
+                    <p className="text-xs font-semibold text-slate-500 mb-2">STATUS</p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {filterOptions.map(opt => (
+                            <button
+                                key={opt.id}
+                                onClick={() => setTempFilter(opt.id)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${tempFilter === opt.id
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
                     </div>
 
-                    {/* Sort Section */}
-                    <div>
-                        <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Urutkan</p>
-                        <div className="space-y-1.5">
-                            {sortOptions.map(opt => (
-                                <button
-                                    key={opt.id}
-                                    onClick={() => setTempSort(opt.id)}
-                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all text-sm ${tempSort === opt.id
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-slate-200 bg-white text-slate-700'
-                                        }`}
-                                >
-                                    <span className="font-medium">{opt.label}</span>
-                                    {tempSort === opt.id && <Check size={16} className="text-blue-600" />}
-                                </button>
-                            ))}
-                        </div>
+                    {/* Sort Section - horizontal chips */}
+                    <p className="text-xs font-semibold text-slate-500 mb-2">URUTKAN</p>
+                    <div className="flex flex-wrap gap-2">
+                        {sortOptions.map(opt => (
+                            <button
+                                key={opt.id}
+                                onClick={() => setTempSort(opt.id)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${tempSort === opt.id
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                {/* Apply Button - Fixed at bottom */}
-                <div className="p-4 border-t border-slate-100 shrink-0 bg-white">
+                {/* Apply Button */}
+                <div className="px-4 py-3 border-t border-slate-100">
                     <button
                         onClick={handleApply}
-                        className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all"
+                        className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-xl active:scale-[0.98] transition-all text-sm"
                     >
                         Terapkan Filter
                     </button>
