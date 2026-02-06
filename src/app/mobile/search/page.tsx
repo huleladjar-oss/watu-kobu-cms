@@ -298,7 +298,7 @@ export default function MobileSearchPage() {
     return (
         <div className="min-h-screen bg-slate-50 pb-28">
             {/* Header - Non-sticky for better mobile UX */}
-            <header className="bg-[#0F172A] pt-14 pb-6 px-5 rounded-b-3xl shadow-md relative overflow-hidden">
+            <header className="bg-[#0F172A] pt-14 pb-6 px-5 relative overflow-hidden">
                 <div className="flex justify-between items-center relative z-10">
                     <div className="flex flex-col">
                         <p className="text-blue-200 text-xs font-medium tracking-wide mb-0.5">FIELD COLLECTOR PRO</p>
