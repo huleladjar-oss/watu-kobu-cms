@@ -451,7 +451,7 @@ export default function MobileHistoryPage() {
             </header>
 
             {/* Summary Stats Card */}
-            <div className="px-5 -mt-8 mb-4 relative z-30">
+            <div className="px-5 -mt-8 mb-4 relative z-10">
                 <div className="bg-white rounded-2xl shadow-lg p-5 flex justify-between items-center border border-slate-100">
                     <div className="flex flex-1 flex-col items-center gap-1.5">
                         <div className="flex items-center gap-1.5 text-slate-500">
