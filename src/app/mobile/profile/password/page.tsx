@@ -12,6 +12,7 @@ import {
     ShieldCheck,
     AlertCircle,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 // Password Input Component with Toggle Visibility
 function PasswordInput({
@@ -43,8 +44,8 @@ function PasswordInput({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
                     className={`w-full px-4 py-3.5 pr-12 bg-white border rounded-xl text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all ${error
-                            ? 'border-red-300 focus:ring-red-500'
-                            : 'border-slate-200 focus:ring-blue-500'
+                        ? 'border-red-300 focus:ring-red-500'
+                        : 'border-slate-200 focus:ring-blue-500'
                         }`}
                 />
                 <button
@@ -67,6 +68,7 @@ function PasswordInput({
 
 export default function ChangePasswordPage() {
     const router = useRouter();
+    const { user } = useAuth();
 
     // Password states
     const [currentPass, setCurrentPass] = useState('');
@@ -88,31 +90,43 @@ export default function ChangePasswordPage() {
     const showMismatchError = newPass.length > 0 && confirmPass.length > 0 && !passwordsMatch;
     const isFormValid = currentPass.length > 0 && newPass.length >= 6 && passwordsMatch && confirmPass.length > 0;
 
-    // Handle submit
+    // Handle submit - calls real API
     const handleSubmit = async () => {
-        if (!isFormValid) return;
+        if (!isFormValid || !user) return;
 
         setError('');
         setIsLoading(true);
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        try {
+            const response = await fetch(`/api/users/${user.id}/password`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    currentPassword: currentPass,
+                    newPassword: newPass,
+                }),
+            });
 
-        // Simple validation (in real app, this would be server-side)
-        if (currentPass.length < 4) {
-            setError('Password lama salah');
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Gagal mengubah password');
+            }
+
+            // Success
             setIsLoading(false);
-            return;
+            setSuccess(true);
+
+            // Redirect after success
+            setTimeout(() => {
+                router.push('/mobile/profile');
+            }, 1500);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Terjadi kesalahan');
+            setIsLoading(false);
         }
-
-        // Success
-        setIsLoading(false);
-        setSuccess(true);
-
-        // Redirect after success
-        setTimeout(() => {
-            router.push('/mobile/profile');
-        }, 1500);
     };
 
     return (
@@ -226,12 +240,12 @@ export default function ChangePasswordPage() {
                         onClick={handleSubmit}
                         disabled={!isFormValid || isLoading || success}
                         className={`w-full font-bold h-14 rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg mt-2 ${success
-                                ? 'bg-green-500 text-white'
-                                : isLoading
-                                    ? 'bg-slate-300 text-slate-500'
-                                    : isFormValid
-                                        ? 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white'
-                                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            ? 'bg-green-500 text-white'
+                            : isLoading
+                                ? 'bg-slate-300 text-slate-500'
+                                : isFormValid
+                                    ? 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white'
+                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                             }`}
                     >
                         {success ? (
