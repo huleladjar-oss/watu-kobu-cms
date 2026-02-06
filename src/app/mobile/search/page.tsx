@@ -155,8 +155,8 @@ function FilterModal({
                                 key={opt.id}
                                 onClick={() => setTempFilter(opt.id)}
                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${tempFilter === opt.id
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                     }`}
                             >
                                 {opt.label}
@@ -174,8 +174,8 @@ function FilterModal({
                                 key={opt.id}
                                 onClick={() => setTempSort(opt.id)}
                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${tempSort === opt.id
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                     }`}
                             >
                                 {opt.label}
