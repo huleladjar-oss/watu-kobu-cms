@@ -18,6 +18,8 @@ declare module 'next-auth' {
             employeeId: string | null;
             avatarUrl: string | null;
             area: string | null;
+            phone: string | null;
+            address: string | null;
         };
     }
 
@@ -29,6 +31,8 @@ declare module 'next-auth' {
         employeeId: string | null;
         avatarUrl: string | null;
         area: string | null;
+        phone: string | null;
+        address: string | null;
     }
 }
 
@@ -41,6 +45,8 @@ declare module 'next-auth/jwt' {
         employeeId: string | null;
         avatarUrl: string | null;
         area: string | null;
+        phone: string | null;
+        address: string | null;
     }
 }
 
@@ -92,6 +98,8 @@ export const authOptions: NextAuthOptions = {
                     employeeId: user.employeeId,
                     avatarUrl: user.avatarUrl,
                     area: user.area,
+                    phone: user.phone,
+                    address: user.address,
                 };
             },
         }),
@@ -109,6 +117,8 @@ export const authOptions: NextAuthOptions = {
                 token.employeeId = user.employeeId;
                 token.avatarUrl = user.avatarUrl;
                 token.area = user.area;
+                token.phone = user.phone;
+                token.address = user.address;
             }
             return token;
         },
@@ -124,6 +134,8 @@ export const authOptions: NextAuthOptions = {
                 employeeId: token.employeeId,
                 avatarUrl: token.avatarUrl,
                 area: token.area,
+                phone: token.phone,
+                address: token.address,
             };
             return session;
         },

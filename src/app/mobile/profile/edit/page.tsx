@@ -99,24 +99,25 @@ export default function EditProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { user } = useAuth();
 
-    // Form state with mock data
+    // Form state from user data
     const [formData, setFormData] = useState({
-        fullName: user?.name || 'Budi Santoso',
-        whatsapp: '0812-3456-7890',
-        email: 'budi.santoso@watukobu.co.id',
-        address: 'Jl. Merpati No. 45, Tebet',
+        fullName: user?.name || '',
+        whatsapp: user?.phone || '',
+        email: user?.email || '',
+        address: user?.address || '',
     });
 
     // Photo state
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Locked data (from company/admin)
     const lockedData = {
-        nik: `WK-${user?.id?.toString().padStart(3, '0') || '003'}`,
+        nik: user?.employeeId || `WK-${user?.id?.toString().padStart(3, '0') || '003'}`,
         jabatan: 'Senior Collector',
-        area: 'Jakarta Selatan',
+        area: user?.area || 'Jakarta Selatan',
     };
 
     // Handle photo upload
@@ -140,18 +141,41 @@ export default function EditProfilePage() {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    // Handle save
+    // Handle save - calls real API
     const handleSave = async () => {
         setIsSaving(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        setIsSaving(false);
-        setShowSuccess(true);
+        setError(null);
 
-        // Auto redirect after success
-        setTimeout(() => {
-            router.push('/mobile/profile');
-        }, 1500);
+        try {
+            const response = await fetch(`/api/users/${user?.id}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: formData.fullName,
+                    phone: formData.whatsapp,
+                    email: formData.email,
+                    address: formData.address,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to save profile');
+            }
+
+            setShowSuccess(true);
+
+            // Auto redirect after success
+            setTimeout(() => {
+                router.push('/mobile/profile');
+            }, 1500);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan');
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -296,10 +320,10 @@ export default function EditProfilePage() {
                     onClick={handleSave}
                     disabled={isSaving || showSuccess}
                     className={`w-full mt-4 font-bold h-14 rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg ${showSuccess
-                            ? 'bg-green-500 text-white'
-                            : isSaving
-                                ? 'bg-slate-300 text-slate-500'
-                                : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white'
+                        ? 'bg-green-500 text-white'
+                        : isSaving
+                            ? 'bg-slate-300 text-slate-500'
+                            : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white'
                         }`}
                 >
                     {showSuccess ? (

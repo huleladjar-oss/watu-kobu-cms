@@ -18,6 +18,8 @@ export interface User {
     avatarUrl?: string;
     employeeId?: string;
     area?: string;
+    phone?: string;
+    address?: string;
     redirectTo: string;
 }
 
@@ -72,6 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 avatarUrl?: string;
                 employeeId?: string;
                 area?: string;
+                phone?: string;
+                address?: string;
                 image?: string;
             };
 
@@ -85,6 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 avatarUrl: sUser.avatarUrl || sUser.image || "",
                 employeeId: sUser.employeeId || "",
                 area: sUser.area || "",
+                phone: sUser.phone || "",
+                address: sUser.address || "",
                 redirectTo: getRedirectPath(role),
             };
         }

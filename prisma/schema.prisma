@@ -47,6 +47,8 @@ model User {
   role          Role      @default(COLLECTOR)
   employeeId    String?   @unique // NIK Karyawan
   area          String?   // Area Tugas (Misal: Jakarta Selatan)
+  phone         String?   // Nomor WhatsApp / Telepon
+  address       String?   // Alamat Domisili
   avatarUrl     String?
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
