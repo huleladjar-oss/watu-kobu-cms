@@ -10,6 +10,7 @@ export interface Asset {
     // A. CORE FIELDS (Indonesian)
     nomorAccount: string;           // NOMOR ACCOUNT
     namaDebitur: string;            // NAMA DEBITUR
+    namaKreditur: string;           // NAMA KREDITUR
 
     // B. BRANCH INFO (Indonesian)
     kantorCabang: string;           // KANTOR CABANG
@@ -54,6 +55,7 @@ export interface Asset {
     // These mirror the Indonesian fields above for legacy code compatibility
     loanId: string;                 // Alias: nomorAccount
     debtorName: string;             // Alias: namaDebitur
+    creditorName: string;           // Alias: namaKreditur
     branch: string;                 // Alias: kantorCabang
     region: string;                 // Alias: kanwil
     spkStatus: 'AKTIF' | 'PASIF';   // Alias: kelolaanTerbitSpk

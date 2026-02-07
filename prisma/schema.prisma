@@ -83,6 +83,7 @@ model Asset {
   // Core Fields
   nomorAccount            String      @unique // NOMOR ACCOUNT
   namaDebitur             String              // NAMA DEBITUR
+  namaKreditur            String?             // NAMA KREDITUR (nama bank/lembaga pemberi kredit)
   
   // Branch Info
   kantorCabang            String?             // KANTOR CABANG

@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
                 // Core
                 nomorAccount: asset.nomorAccount,
                 namaDebitur: asset.namaDebitur,
+                namaKreditur: asset.namaKreditur || '',
                 // Branch
                 kantorCabang,
                 kanwil,
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
                 // ===== ENGLISH FIELD NAMES (BACKWARD-COMPATIBLE ALIASES) =====
                 loanId: asset.nomorAccount,
                 debtorName: asset.namaDebitur,
+                creditorName: asset.namaKreditur || '',
                 branch: kantorCabang,
                 region: kanwil,
                 spkStatus: kelolaanTerbitSpk,
@@ -170,6 +172,7 @@ export async function POST(request: NextRequest) {
             data: {
                 nomorAccount,
                 namaDebitur: namaDebitur || 'Unknown',
+                namaKreditur: body.namaKreditur || body.creditorName || null,
                 kantorCabang: kantorCabangInput || null,
                 kanwil: kanwilInput || null,
                 kelolaanTerbitSpk: body.kelolaanTerbitSpk || body.spkStatus || 'AKTIF',

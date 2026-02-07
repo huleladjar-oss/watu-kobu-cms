@@ -27,6 +27,7 @@ interface BankColumnMapping {
     // Core
     nomorAccount: string | null;
     namaDebitur: string | null;
+    namaKreditur: string | null;
     // Branch
     kantorCabang: string | null;
     kanwil: string | null;
@@ -60,6 +61,7 @@ interface BankColumnMapping {
 const BANK_HEADER_MAPPINGS: Record<keyof BankColumnMapping, string[]> = {
     nomorAccount: ['NOMOR ACCOUNT', 'ACCTNO', 'ACC', 'NO REK', 'NOREK', 'ACCOUNT'],
     namaDebitur: ['NAMA DEBITUR', 'NAMA_DEBITUR', 'NAMA', 'DEBITUR'],
+    namaKreditur: ['NAMA KREDITUR', 'KREDITUR', 'NAMA_KREDITUR', 'BANK', 'NAMA BANK'],
     kantorCabang: ['KANTOR CABANG', 'CABANG', 'BRANCH', 'KC'],
     kanwil: ['KANWIL', 'ARCOLL', 'REGION'],
     kelolaanTerbitSpk: ['KELOLAAN TERBIT SPK', 'KELOLAAN', 'STATUS', 'STATUS SPK'],
@@ -130,6 +132,7 @@ function convertBankRowsToAssets(rows: Record<string, string>[], mapping: BankCo
         // Indonesian Fields
         const nomorAccount = mapping.nomorAccount ? row[mapping.nomorAccount] || '' : '';
         const namaDebitur = mapping.namaDebitur ? row[mapping.namaDebitur] || 'Unknown' : 'Unknown';
+        const namaKreditur = mapping.namaKreditur ? row[mapping.namaKreditur] || '' : '';
         const kantorCabang = mapping.kantorCabang ? row[mapping.kantorCabang] || '' : '';
         const kanwil = mapping.kanwil ? row[mapping.kanwil] || '' : '';
         const jenisKredit = mapping.jenisKredit ? row[mapping.jenisKredit] || '' : '';
@@ -155,7 +158,7 @@ function convertBankRowsToAssets(rows: Record<string, string>[], mapping: BankCo
 
         return {
             // Indonesian Fields
-            nomorAccount, namaDebitur, kantorCabang, kanwil, kelolaanTerbitSpk, jenisKredit,
+            nomorAccount, namaDebitur, namaKreditur, kantorCabang, kanwil, kelolaanTerbitSpk, jenisKredit,
             alamatAgunan, alamatKtpDebitur, alamatKantorDebitur,
             nomorHp1Debitur, nomorHp2Debitur, nomorTeleponKantor,
             namaEmergencyKontak, nomorTeleponEmergency, alamatEmergencyKontak,
@@ -166,6 +169,7 @@ function convertBankRowsToAssets(rows: Record<string, string>[], mapping: BankCo
             // Backward-compatible English Aliases
             loanId: nomorAccount,
             debtorName: namaDebitur,
+            creditorName: namaKreditur,
             branch: kantorCabang,
             region: kanwil,
             spkStatus: kelolaanTerbitSpk,
@@ -301,6 +305,7 @@ function CSVImportModal({ onClose, onImport }: { onClose: () => void; onImport: 
             const mapping: BankColumnMapping = {
                 nomorAccount: findColumn(headers, BANK_HEADER_MAPPINGS.nomorAccount),
                 namaDebitur: findColumn(headers, BANK_HEADER_MAPPINGS.namaDebitur),
+                namaKreditur: findColumn(headers, BANK_HEADER_MAPPINGS.namaKreditur),
                 kantorCabang: findColumn(headers, BANK_HEADER_MAPPINGS.kantorCabang),
                 kanwil: findColumn(headers, BANK_HEADER_MAPPINGS.kanwil),
                 kelolaanTerbitSpk: findColumn(headers, BANK_HEADER_MAPPINGS.kelolaanTerbitSpk),

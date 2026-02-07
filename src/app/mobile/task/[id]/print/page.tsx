@@ -119,6 +119,12 @@ export default function MobileTaskPrintPage() {
                             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Kantor Wilayah</p>
                             <p className="text-gray-900">{task.region}</p>
                         </div>
+                        {task.creditorName && (
+                            <div className="col-span-2">
+                                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Nama Kreditur</p>
+                                <p className="font-semibold text-gray-900">{task.creditorName}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

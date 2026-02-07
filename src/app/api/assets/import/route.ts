@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
                     data: {
                         nomorAccount: String(nomorAccount),
                         namaDebitur: namaDebitur || 'Unknown',
+                        namaKreditur: asset.namaKreditur || asset.creditorName || null,
                         kantorCabang: kantorCabangInput || null,
                         kanwil: kanwilInput || null,
                         kelolaanTerbitSpk: asset.kelolaanTerbitSpk || asset.spkStatus || 'AKTIF',
