@@ -150,38 +150,50 @@ export function AssetProvider({ children }: { children: ReactNode }) {
 
     // Add new asset
     const addAsset = async (asset: Omit<Asset, 'id' | 'lastUpdate'>) => {
+        const response = await fetch('/api/assets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(asset),
+        });
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to add asset');
+        }
+    };
+
+    // Import multiple assets via bulk API
+    const importAssets = async (newAssets: Omit<Asset, 'id' | 'lastUpdate'>[]): Promise<number> => {
         try {
-            const response = await fetch('/api/assets', {
+            const response = await fetch('/api/assets/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(asset),
+                body: JSON.stringify({ assets: newAssets }),
             });
             const data = await response.json();
 
             if (data.success) {
-                await fetchAssets(); // Refresh from DB
+                await fetchAssets(); // Refresh once after bulk import
+                return data.importedCount || 0;
             } else {
-                throw new Error(data.error);
+                console.error('Bulk import failed:', data.error);
+                // Fallback: try one-by-one
+                let successCount = 0;
+                for (const asset of newAssets) {
+                    try {
+                        await addAsset(asset);
+                        successCount++;
+                    } catch (err) {
+                        console.error('Error importing individual asset:', err);
+                    }
+                }
+                await fetchAssets();
+                return successCount;
             }
         } catch (err) {
-            console.error('Error adding asset:', err);
+            console.error('Import error:', err);
             throw err;
         }
-    };
-
-    // Import multiple assets
-    const importAssets = async (newAssets: Omit<Asset, 'id' | 'lastUpdate'>[]): Promise<number> => {
-        let successCount = 0;
-        for (const asset of newAssets) {
-            try {
-                await addAsset(asset);
-                successCount++;
-            } catch (err) {
-                console.error('Error importing asset:', err);
-            }
-        }
-        await fetchAssets();
-        return successCount;
     };
 
     // Update asset
