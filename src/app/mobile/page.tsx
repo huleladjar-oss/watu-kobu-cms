@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useAssets } from '@/context/AssetContext';
 import Link from 'next/link';
@@ -42,10 +42,41 @@ function getTodayFormatted(): string {
     return `${dayName}, ${date} ${monthName} ${year}`;
 }
 
+// Dashboard data type from API
+interface DashboardData {
+    todayVisits: number;
+    visitedAssetIds: string[];
+    janjiBayarAssetIds: string[];
+    collectedAmount: number;
+    promiseToPayCount: number;
+}
+
 export default function MobileHomePage() {
     const { user, logout } = useAuth();
     const { assets } = useAssets();
     const router = useRouter();
+
+    // Real dashboard data from API
+    const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+
+    // Fetch real dashboard data from API
+    useEffect(() => {
+        if (!user) return;
+
+        const fetchDashboard = async () => {
+            try {
+                const response = await fetch('/api/collector/dashboard');
+                const result = await response.json();
+                if (result.success) {
+                    setDashboardData(result.data);
+                }
+            } catch (error) {
+                console.error('Error fetching dashboard:', error);
+            }
+        };
+
+        fetchDashboard();
+    }, [user]);
 
     // Filter tasks for current collector
     const myTasks = useMemo(() => {
@@ -67,17 +98,15 @@ export default function MobileHomePage() {
 
         // 2. Monthly Target (Use hardcoded or 20% of portfolio)
         const monthlyTarget = HARDCODED_MONTHLY_TARGET;
-        // Alternative: const monthlyTarget = totalPortfolio * MONTHLY_TARGET_PERCENTAGE;
 
-        // 3. Collected Amount (TODO: Replace with real payment data from database)
-        // In production: Sum payments received this month for this collector
-        const collectedAmount = 0; // Real data will come from PaymentReport
+        // 3. Collected Amount (from real database data)
+        const collectedAmount = dashboardData?.collectedAmount || 0;
 
-        // 4. Daily Visits (TODO: Replace with validation report count from database)
-        const dailyVisits = 0; // Real data will come from VisitReport
+        // 4. Daily Visits (from real database data)
+        const dailyVisits = dashboardData?.todayVisits || 0;
 
-        // 5. Promise to Pay Today (TODO: Count from VisitReport with janji bayar)
-        const promiseToPayCount = 0; // Real data from reports with paymentPromise
+        // 5. Promise to Pay (from real database data)
+        const promiseToPayCount = dashboardData?.promiseToPayCount || 0;
 
         // Calculate progress percentage
         const collectionProgress = monthlyTarget > 0 ? Math.min((collectedAmount / monthlyTarget) * 100, 100) : 0;
@@ -94,18 +123,25 @@ export default function MobileHomePage() {
             visitStatus,
             promiseToPayCount,
         };
-    }, [myTasks]);
+    }, [myTasks, dashboardData]);
 
-    // Mock: Tasks with promise to pay today (first 3 for demo)
+    // Real: Tasks with JANJI_BAYAR status (from database)
     const tasksWithPromiseToday = useMemo(() => {
-        return myTasks.slice(0, 3).map(t => t.id);
-    }, [myTasks]);
+        if (!dashboardData) return [];
+        return dashboardData.janjiBayarAssetIds;
+    }, [dashboardData]);
 
-    // Mock: Tasks not yet visited (simulate - assume tasks without validation)
+    // Real: Tasks not yet visited (assets without any VisitReport)
     const tasksNotVisited = useMemo(() => {
-        // In production: filter tasks that don't have approved validation reports
-        return myTasks.slice(3, 8).map(t => t.id);
-    }, [myTasks]);
+        if (!dashboardData) {
+            // Before API data loads, treat ALL tasks as not visited
+            return myTasks.map(t => t.id);
+        }
+        // Assets that have never been visited
+        return myTasks
+            .filter(t => !dashboardData.visitedAssetIds.includes(t.id))
+            .map(t => t.id);
+    }, [myTasks, dashboardData]);
 
     // Smart sorting: Promise Today > Not Visited > Others
     const sortedTasks = useMemo(() => {
