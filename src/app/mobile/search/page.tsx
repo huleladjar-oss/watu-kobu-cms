@@ -250,11 +250,13 @@ export default function MobileSearchPage() {
             result = result.filter(asset => {
                 switch (activeFilter) {
                     case 'macet':
-                        return asset.status === 'MACET';
+                        // Match visual badge: AKTIF SPK = shown as "MACET"
+                        return asset.spkStatus === 'AKTIF';
                     case 'janji_bayar':
                         return asset.status === 'JANJI_BAYAR';
                     case 'lancar':
-                        return asset.status === 'LANCAR';
+                        // Match visual badge: PASIF SPK = shown as "LANCAR"
+                        return asset.spkStatus === 'PASIF';
                     case 'lunas':
                         return asset.status === 'LUNAS';
                     default:
