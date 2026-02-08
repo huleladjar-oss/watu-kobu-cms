@@ -113,3 +113,59 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+// PATCH /api/assets/import - Update existing assets (e.g., fill missing namaKreditur)
+export async function PATCH(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { assets } = body;
+
+        if (!assets || !Array.isArray(assets) || assets.length === 0) {
+            return NextResponse.json(
+                { success: false, error: 'No assets provided' },
+                { status: 400 }
+            );
+        }
+
+        let updatedCount = 0;
+        let skippedCount = 0;
+
+        for (const asset of assets) {
+            try {
+                const nomorAccount = String(asset.nomorAccount || asset.loanId || '');
+                if (!nomorAccount) { skippedCount++; continue; }
+
+                // Build update data - only update fields that have values
+                const updateData: Record<string, unknown> = {};
+                if (asset.namaKreditur || asset.creditorName) {
+                    updateData.namaKreditur = asset.namaKreditur || asset.creditorName;
+                }
+
+                if (Object.keys(updateData).length === 0) { skippedCount++; continue; }
+
+                const result = await prisma.asset.updateMany({
+                    where: { nomorAccount },
+                    data: updateData,
+                });
+
+                if (result.count > 0) { updatedCount++; } else { skippedCount++; }
+            } catch (err) {
+                console.error(`Error updating ${asset.nomorAccount}:`, err);
+                skippedCount++;
+            }
+        }
+
+        return NextResponse.json({
+            success: true,
+            updatedCount,
+            skippedCount,
+            message: `${updatedCount} aset diupdate. ${skippedCount} dilewati.`,
+        });
+    } catch (error) {
+        console.error('Error in bulk update:', error);
+        return NextResponse.json(
+            { success: false, error: 'Failed to update assets' },
+            { status: 500 }
+        );
+    }
+}

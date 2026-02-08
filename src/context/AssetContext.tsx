@@ -168,12 +168,24 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     // Import multiple assets via bulk API
     const importAssets = async (newAssets: Omit<Asset, 'id' | 'lastUpdate'>[]): Promise<number> => {
         try {
+            // Step 1: Import new assets (POST)
             const response = await fetch('/api/assets/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ assets: newAssets }),
             });
             const data = await response.json();
+
+            // Step 2: Update existing assets with new fields like namaKreditur (PATCH)
+            try {
+                await fetch('/api/assets/import', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ assets: newAssets }),
+                });
+            } catch (patchErr) {
+                console.warn('PATCH update for existing assets failed:', patchErr);
+            }
 
             if (data.success) {
                 await fetchAssets(); // Refresh once after bulk import
