@@ -11,12 +11,28 @@ declare global {
     var prisma: PrismaClient | undefined;
 }
 
+// Fix for Supabase PgBouncer: automatically add ?pgbouncer=true if using
+// the transaction pooler (port 6543) to prevent "prepared statement already exists" errors
+function getDatabaseUrl(): string {
+    const url = process.env.DATABASE_URL || '';
+    if (url.includes(':6543') && !url.includes('pgbouncer=true')) {
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}pgbouncer=true&connection_limit=1`;
+    }
+    return url;
+}
+
 // Create Prisma Client options
 const prismaClientOptions = {
     log: process.env.NODE_ENV === 'development'
-        ? ['query', 'error', 'warn']
-        : ['error'],
-} as const;
+        ? ['query', 'error', 'warn'] as const
+        : ['error'] as const,
+    datasources: {
+        db: {
+            url: getDatabaseUrl(),
+        },
+    },
+};
 
 // Singleton pattern: Reuse existing instance in development to prevent
 // creating multiple connections during hot-reload
