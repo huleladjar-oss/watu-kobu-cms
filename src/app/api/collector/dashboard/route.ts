@@ -75,12 +75,24 @@ export async function GET(request: NextRequest) {
         // 5. Count promise to pay (assets with JANJI_BAYAR status)
         const promiseToPayCount = janjiBayarAssetIds.length;
 
+        // 6. Get asset IDs with PENDING visit reports (for "Menunggu Validasi" status)
+        const pendingVisits = await prisma.visitReport.findMany({
+            where: {
+                collectorId: userId,
+                statusValidation: 'PENDING',
+            },
+            select: { assetId: true },
+            distinct: ['assetId'],
+        });
+        const pendingVisitAssetIds = pendingVisits.map(v => v.assetId);
+
         return NextResponse.json({
             success: true,
             data: {
                 todayVisits,
                 visitedAssetIds,
                 janjiBayarAssetIds,
+                pendingVisitAssetIds,
                 collectedAmount: monthlyPayments._sum.amount || 0,
                 promiseToPayCount,
             },

@@ -1,10 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useValidation, VisitReport, PaymentReport, allPhotosValid, hasRequiredPhotos, hasCoordinates } from '@/context/ValidationContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useValidation, PaymentReport, allPhotosValid } from '@/context/ValidationContext';
 import { useAssets } from '@/context/AssetContext';
 import { FileText, MapPin, Camera, AlertTriangle, CheckCircle, XCircle, Eye, Banknote, Clock, Calendar, User, History as HistoryIcon, Filter } from 'lucide-react';
 import Link from 'next/link';
+
+// DB-backed visit report type (from API)
+interface DbVisitReport {
+    id: string;
+    assetId: string;
+    collectorId: string;
+    timestamp: string;
+    outcome: string;
+    notes: string | null;
+    gpsLat: number | null;
+    gpsLng: number | null;
+    evidencePhoto: string | null;
+    statusValidation: 'PENDING' | 'APPROVED' | 'REJECTED';
+    asset: {
+        nomorAccount: string;
+        namaDebitur: string;
+        kantorCabang: string;
+        kanwil: string | null;
+        alamatAgunan: string | null;
+        nomorHp1Debitur: string | null;
+    };
+    collector: {
+        name: string;
+    };
+}
 
 // History Log Entry Type
 interface HistoryLogEntry {
@@ -69,8 +94,7 @@ const getInitials = (name: string) => {
 };
 
 export default function ValidationPage() {
-    const { fieldReports, verifyVisit, rejectVisit, getFieldPendingCount, getFieldSuspiciousCount,
-        paymentReports, verifyPayment, rejectPayment, getPaymentPendingCount } = useValidation();
+    const { paymentReports, verifyPayment, rejectPayment, getPaymentPendingCount } = useValidation();
     const { updateAssetBalance } = useAssets();
 
     const [activeTab, setActiveTab] = useState<'visits' | 'payments' | 'history'>('visits');
@@ -78,69 +102,126 @@ export default function ValidationPage() {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
 
+    // DB-backed visit reports
+    const [dbVisitReports, setDbVisitReports] = useState<DbVisitReport[]>([]);
+    const [visitLoading, setVisitLoading] = useState(true);
+
+    // Fetch visit reports from DB
+    const fetchVisitReports = useCallback(async () => {
+        try {
+            const res = await fetch('/api/reports/visit');
+            const data = await res.json();
+            if (data.success) {
+                setDbVisitReports(data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch visit reports:', err);
+        } finally {
+            setVisitLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchVisitReports();
+    }, [fetchVisitReports]);
+
     // History state
     const [historyLogs, setHistoryLogs] = useState<HistoryLogEntry[]>([]);
     const [filterType, setFilterType] = useState<'all' | 'visit' | 'payment'>('all');
     const [filterStatus, setFilterStatus] = useState<'all' | 'APPROVED' | 'REJECTED'>('all');
 
-    // Handle visit verification
-    const handleVerifyVisit = (reportId: string) => {
-        const report = fieldReports.find(r => r.id === reportId);
+    // Handle visit verification (DB-backed)
+    const handleVerifyVisit = async (reportId: string) => {
+        const report = dbVisitReports.find(r => r.id === reportId);
         if (!report) return;
 
-        verifyVisit(reportId);
+        try {
+            const res = await fetch(`/api/reports/visit/${reportId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'APPROVED' }),
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
 
-        // Add to history
-        const historyEntry: HistoryLogEntry = {
-            id: `history-visit-${Date.now()}`,
-            type: 'visit',
-            timestamp: report.submissionDate,
-            processedAt: new Date().toISOString(),
-            collectorName: report.collectorName,
-            debtorName: report.debtorName,
-            loanId: report.loanId,
-            branch: report.branch,
-            status: 'APPROVED',
-            processedBy: 'Admin Staff',
-            coordinates: report.coordinates,
-            photosValid: allPhotosValid(report),
-        };
-        setHistoryLogs(prev => [historyEntry, ...prev]);
+            // Remove from pending list
+            setDbVisitReports(prev => prev.map(r =>
+                r.id === reportId ? { ...r, statusValidation: 'APPROVED' } : r
+            ));
 
-        setToastMessage('✓ Visit Report Approved!');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+            // Add to history
+            const historyEntry: HistoryLogEntry = {
+                id: `history-visit-${Date.now()}`,
+                type: 'visit',
+                timestamp: report.timestamp,
+                processedAt: new Date().toISOString(),
+                collectorName: report.collector.name,
+                debtorName: report.asset.namaDebitur,
+                loanId: report.asset.nomorAccount,
+                branch: report.asset.kantorCabang,
+                status: 'APPROVED',
+                processedBy: 'Admin Staff',
+                coordinates: report.gpsLat && report.gpsLng ? `${report.gpsLat},${report.gpsLng}` : '',
+            };
+            setHistoryLogs(prev => [historyEntry, ...prev]);
+
+            setToastMessage('✓ Visit Report Approved!');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        } catch (err) {
+            console.error('Failed to approve visit:', err);
+            setToastMessage('✗ Failed to approve visit report');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
-    const handleRejectVisit = (reportId: string) => {
+    const handleRejectVisit = async (reportId: string) => {
         const reason = prompt('Alasan penolakan (mis: Foto tidak valid, GPS tidak akurat):');
         if (!reason) return;
 
-        const report = fieldReports.find(r => r.id === reportId);
+        const report = dbVisitReports.find(r => r.id === reportId);
         if (!report) return;
 
-        rejectVisit(reportId, reason);
+        try {
+            const res = await fetch(`/api/reports/visit/${reportId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'REJECTED', rejectionReason: reason }),
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
 
-        // Add to history
-        const historyEntry: HistoryLogEntry = {
-            id: `history-visit-${Date.now()}`,
-            type: 'visit',
-            timestamp: report.submissionDate,
-            processedAt: new Date().toISOString(),
-            collectorName: report.collectorName,
-            debtorName: report.debtorName,
-            loanId: report.loanId,
-            branch: report.branch,
-            status: 'REJECTED',
-            processedBy: 'Admin Staff',
-            coordinates: report.coordinates,
-            photosValid: allPhotosValid(report),
-        };
-        setHistoryLogs(prev => [historyEntry, ...prev]);
+            // Remove from pending list
+            setDbVisitReports(prev => prev.map(r =>
+                r.id === reportId ? { ...r, statusValidation: 'REJECTED' } : r
+            ));
 
-        setToastMessage('✗ Visit Report Rejected');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+            // Add to history
+            const historyEntry: HistoryLogEntry = {
+                id: `history-visit-${Date.now()}`,
+                type: 'visit',
+                timestamp: report.timestamp,
+                processedAt: new Date().toISOString(),
+                collectorName: report.collector.name,
+                debtorName: report.asset.namaDebitur,
+                loanId: report.asset.nomorAccount,
+                branch: report.asset.kantorCabang,
+                status: 'REJECTED',
+                processedBy: 'Admin Staff',
+                coordinates: report.gpsLat && report.gpsLng ? `${report.gpsLat},${report.gpsLng}` : '',
+            };
+            setHistoryLogs(prev => [historyEntry, ...prev]);
+
+            setToastMessage('✗ Visit Report Rejected');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        } catch (err) {
+            console.error('Failed to reject visit:', err);
+            setToastMessage('✗ Failed to reject visit report');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
     // Handle payment verification with auto-balance update
@@ -204,11 +285,12 @@ export default function ValidationPage() {
         setTimeout(() => setShowToast(false), 3000);
     };
 
-    const pendingFieldCount = getFieldPendingCount();
+    // DB-backed counts
+    const pendingDbVisitReports = dbVisitReports.filter(r => r.statusValidation === 'PENDING');
+    const pendingFieldCount = pendingDbVisitReports.length;
     const pendingPaymentCount = getPaymentPendingCount();
-    const suspiciousCount = getFieldSuspiciousCount();
+    const suspiciousCount = 0; // Will be calculated from DB data if needed
 
-    const pendingFieldReports = fieldReports.filter(r => r.status === 'Pending');
     const pendingPaymentReports = paymentReports.filter(r => r.status === 'PENDING');
 
     // Calculate total pending payment amount
@@ -303,8 +385,8 @@ export default function ValidationPage() {
                         <button
                             onClick={() => setActiveTab('visits')}
                             className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${activeTab === 'visits'
-                                    ? 'bg-blue-600 text-white shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                 }`}
                         >
                             <FileText size={18} />
@@ -320,8 +402,8 @@ export default function ValidationPage() {
                         <button
                             onClick={() => setActiveTab('payments')}
                             className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${activeTab === 'payments'
-                                    ? 'bg-green-600 text-white shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-green-600 text-white shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                 }`}
                         >
                             <Banknote size={18} />
@@ -337,8 +419,8 @@ export default function ValidationPage() {
                         <button
                             onClick={() => setActiveTab('history')}
                             className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${activeTab === 'history'
-                                    ? 'bg-gray-700 text-white shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-gray-700 text-white shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                 }`}
                         >
                             <HistoryIcon size={18} />
@@ -360,38 +442,39 @@ export default function ValidationPage() {
                     )}
                 </div>
 
-                {/* TAB CONTENT: Field Visits - Ticket Style Cards */}
+                {/* TAB CONTENT: Field Visits - DB-backed Cards */}
                 {activeTab === 'visits' && (
                     <div className="space-y-4">
-                        {pendingFieldReports.length === 0 ? (
+                        {visitLoading ? (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
+                                <p className="text-gray-500 text-lg font-semibold">Loading visit reports...</p>
+                            </div>
+                        ) : pendingDbVisitReports.length === 0 ? (
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
                                 <CheckCircle size={64} className="mx-auto text-gray-300 mb-4" />
                                 <p className="text-gray-500 text-lg font-semibold">All field visits validated!</p>
                                 <p className="text-gray-400 text-sm mt-1">No pending visit reports to review</p>
                             </div>
                         ) : (
-                            pendingFieldReports.map((report) => {
-                                const photosValid = allPhotosValid(report);
-                                const hasPhotos = hasRequiredPhotos(report);
-                                const hasGPS = hasCoordinates(report);
-                                const isSuspicious = !photosValid;
+                            pendingDbVisitReports.map((report) => {
+                                const hasGPS = report.gpsLat !== null && report.gpsLng !== null;
+                                const gpsCoords = hasGPS ? `${report.gpsLat},${report.gpsLng}` : '';
 
                                 return (
                                     <div
                                         key={report.id}
-                                        className={`bg-white rounded-xl shadow-sm border-l-4 p-6 ${isSuspicious ? 'border-l-red-500' : 'border-l-blue-500'
-                                            }`}
+                                        className="bg-white rounded-xl shadow-sm border-l-4 border-l-blue-500 p-6"
                                     >
                                         {/* Header Row */}
                                         <div className="flex items-start justify-between mb-4">
                                             {/* Left: Collector Info */}
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
-                                                    {getInitials(report.collectorName)}
+                                                    {getInitials(report.collector.name)}
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-900">{report.collectorName}</p>
-                                                    <p className="text-xs text-gray-500">{formatDateTime(report.submissionDate)}</p>
+                                                    <p className="font-semibold text-gray-900">{report.collector.name}</p>
+                                                    <p className="text-xs text-gray-500">{formatDateTime(report.timestamp)}</p>
                                                 </div>
                                             </div>
 
@@ -401,77 +484,34 @@ export default function ValidationPage() {
                                             </span>
                                         </div>
 
-                                        {/* Suspicious Alert */}
-                                        {isSuspicious && (
-                                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                                                <AlertTriangle size={16} className="text-red-600 mt-0.5 flex-shrink-0" />
-                                                <div>
-                                                    <p className="text-xs font-semibold text-red-800">⚠ Suspicious Activity Detected</p>
-                                                    <p className="text-xs text-red-600 mt-0.5">Photo timestamp mismatch — possible fraud or photo reuse</p>
-                                                </div>
-                                            </div>
-                                        )}
-
                                         {/* Content Grid: 2 Columns */}
                                         <div className="grid grid-cols-2 gap-6 mb-4">
-                                            {/* Left Column: Evidence Preview */}
+                                            {/* Left Column: Evidence */}
                                             <div className="space-y-3">
                                                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Evidence</p>
-
-                                                {/* Photo Grid */}
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    {report.photoEvidence.front && (
-                                                        <button
-                                                            onClick={() => setSelectedPhoto(report.photoEvidence.front)}
-                                                            className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-colors group relative"
-                                                        >
-                                                            <img src={report.photoEvidence.front} alt="Front" className="w-full h-full object-cover" />
-                                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all">
-                                                                <Eye size={16} className="text-white opacity-0 group-hover:opacity-100" />
-                                                            </div>
-                                                        </button>
-                                                    )}
-                                                    {report.photoEvidence.side && (
-                                                        <button
-                                                            onClick={() => setSelectedPhoto(report.photoEvidence.side)}
-                                                            className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-colors group relative"
-                                                        >
-                                                            <img src={report.photoEvidence.side} alt="Side" className="w-full h-full object-cover" />
-                                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all">
-                                                                <Eye size={16} className="text-white opacity-0 group-hover:opacity-100" />
-                                                            </div>
-                                                        </button>
-                                                    )}
-                                                    {report.photoEvidence.withDebtor && (
-                                                        <button
-                                                            onClick={() => setSelectedPhoto(report.photoEvidence.withDebtor)}
-                                                            className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-colors group relative"
-                                                        >
-                                                            <img src={report.photoEvidence.withDebtor} alt="With Debtor" className="w-full h-full object-cover" />
-                                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all">
-                                                                <Eye size={16} className="text-white opacity-0 group-hover:opacity-100" />
-                                                            </div>
-                                                        </button>
-                                                    )}
-                                                </div>
 
                                                 {/* GPS Indicator */}
                                                 <div className="flex items-center gap-2">
                                                     <MapPin size={14} className={hasGPS ? 'text-green-600' : 'text-red-600'} />
                                                     <span className={`text-xs ${hasGPS ? 'text-green-700 font-mono' : 'text-red-700'}`}>
-                                                        {hasGPS ? report.coordinates : 'GPS data missing'}
+                                                        {hasGPS ? gpsCoords : 'GPS data missing'}
                                                     </span>
                                                 </div>
 
-                                                {/* Validation Indicators */}
+                                                {/* Outcome Badge */}
                                                 <div className="flex gap-2 flex-wrap">
-                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${hasPhotos ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${report.outcome === 'BERTEMU'
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : report.outcome === 'TIDAK_BERTEMU'
+                                                                ? 'bg-amber-100 text-amber-700'
+                                                                : 'bg-red-100 text-red-700'
                                                         }`}>
-                                                        {hasPhotos ? '✓ Photos OK' : '✗ Photos Missing'}
+                                                        {report.outcome === 'BERTEMU' ? '✓ Bertemu Debitur'
+                                                            : report.outcome === 'TIDAK_BERTEMU' ? '⚠ Tidak Bertemu'
+                                                                : '✗ Pindah'}
                                                     </span>
-                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${photosValid ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                                                        }`}>
-                                                        {photosValid ? '✓ Time OK' : '⚠ Time Issue'}
+                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${hasGPS ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {hasGPS ? '✓ GPS OK' : '✗ No GPS'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -483,24 +523,19 @@ export default function ValidationPage() {
                                                 <div className="space-y-2">
                                                     <div>
                                                         <p className="text-xs text-gray-500">Debtor</p>
-                                                        <p className="text-sm font-semibold text-gray-900">{report.debtorName}</p>
-                                                        <p className="text-xs text-gray-600 font-mono">{report.loanId}</p>
+                                                        <p className="text-sm font-semibold text-gray-900">{report.asset.namaDebitur}</p>
+                                                        <p className="text-xs text-gray-600 font-mono">{report.asset.nomorAccount}</p>
                                                     </div>
 
                                                     <div>
                                                         <p className="text-xs text-gray-500">Branch</p>
-                                                        <p className="text-sm text-gray-700">{report.branch}</p>
+                                                        <p className="text-sm text-gray-700">{report.asset.kantorCabang}</p>
                                                     </div>
 
-                                                    <div>
-                                                        <p className="text-xs text-gray-500 mb-1">Interview Result</p>
-                                                        <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">{report.problemDescription}</p>
-                                                    </div>
-
-                                                    {report.commitmentDate && (
-                                                        <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
-                                                            <Calendar size={12} />
-                                                            Promise: {formatDate(report.commitmentDate)}
+                                                    {report.notes && (
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 mb-1">Notes</p>
+                                                            <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">{report.notes}</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -749,8 +784,8 @@ export default function ValidationPage() {
                                                 <td className="px-6 py-4">
                                                     <div className="flex justify-center">
                                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${log.status === 'APPROVED'
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : 'bg-red-100 text-red-700'
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : 'bg-red-100 text-red-700'
                                                             }`}>
                                                             {log.status === 'APPROVED' ? '✓ APPROVED' : '✗ REJECTED'}
                                                         </span>

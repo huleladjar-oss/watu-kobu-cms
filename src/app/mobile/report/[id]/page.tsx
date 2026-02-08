@@ -89,7 +89,9 @@ export default function MobileReportPage() {
     };
 
     // Validate and submit
-    const handleSubmit = () => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
         const newErrors: string[] = [];
 
         // Validation
@@ -106,50 +108,50 @@ export default function MobileReportPage() {
             return;
         }
 
-        // Submit report
-        if (!user || !task) return;
+        if (!user || !task || isSubmitting) return;
+        setIsSubmitting(true);
 
-        const reportData = {
-            loanId: task.loanId,
-            collectorId: user.id,
-            collectorName: user.name,
-            debtorName: task.debtorName,
-            branch: task.branch,
+        try {
+            // Build notes from interview + collateral assessment
+            const notes = [
+                `Permasalahan: ${problemDescription}`,
+                `Komitmen: ${commitmentDate}`,
+                hasCollateral ? `Agunan: ${collateralStatus}, ${collateralCondition}` : '',
+                hasCollateral ? `Listrik: ${hasElectricity}, Air: ${hasWater}, Marketable: ${isMarketable}` : '',
+            ].filter(Boolean).join(' | ');
 
-            // Interview
-            problemDescription,
-            commitmentDate,
+            // Determine outcome
+            const outcome = photoWithDebtor ? 'BERTEMU' : 'TIDAK_BERTEMU';
 
-            // Collateral (if applicable)
-            collateralCheck: hasCollateral ? {
-                status: collateralStatus,
-                condition: collateralCondition,
-                electricity: hasElectricity,
-                water: hasWater,
-                marketable: isMarketable,
-                facilities: {
-                    school: nearSchool,
-                    mall: nearMall,
-                    hospital: nearHospital,
-                    cityCenter: nearCityCenter,
-                }
-            } : undefined,
+            const response = await fetch('/api/reports/visit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assetId: task.id,
+                    outcome,
+                    notes,
+                    gpsLat: gpsLocation?.lat ?? null,
+                    gpsLng: gpsLocation?.lng ?? null,
+                    evidencePhoto: photoFront?.name || null,
+                    commitmentDate: commitmentDate || null,
+                }),
+            });
 
-            // Evidence
-            gpsLatitude: gpsLocation?.lat ?? 0,
-            gpsLongitude: gpsLocation?.lng ?? 0,
-            photos: [
-                photoFront?.name || '',
-                photoSide?.name || '',
-                photoWithDebtor?.name || '',
-            ],
-        };
+            const result = await response.json();
 
-        // TODO: Submit via ValidationContext after structure alignment
-        console.log('Report data:', reportData);
+            if (!result.success) {
+                setErrors([result.error || 'Gagal mengirim laporan']);
+                setIsSubmitting(false);
+                return;
+            }
 
-        // Redirect to success page
-        router.push('/mobile/report/success');
+            // Redirect to success page
+            router.push('/mobile/report/success');
+        } catch (error) {
+            console.error('Submit error:', error);
+            setErrors(['Gagal mengirim laporan. Periksa koneksi internet.']);
+            setIsSubmitting(false);
+        }
     };
 
     if (!task) {
