@@ -113,8 +113,8 @@ function FilterModal({
 
     const filterOptions = [
         { id: 'all', label: 'Semua Aset' },
-        { id: 'macet', label: 'Macet Berat (> Rp 5 Juta)' },
-        { id: 'janji_bayar', label: 'Ada Tunggakan' },
+        { id: 'macet', label: 'Macet' },
+        { id: 'janji_bayar', label: 'Janji Bayar' },
         { id: 'lancar', label: 'Lancar' },
     ];
 
@@ -250,11 +250,13 @@ export default function MobileSearchPage() {
             result = result.filter(asset => {
                 switch (activeFilter) {
                     case 'macet':
-                        return asset.spkStatus === 'AKTIF' && asset.totalArrears > 5000000;
+                        return asset.status === 'MACET';
                     case 'janji_bayar':
-                        return asset.spkStatus === 'AKTIF' && asset.totalArrears > 1000000;
+                        return asset.status === 'JANJI_BAYAR';
                     case 'lancar':
-                        return asset.spkStatus === 'PASIF';
+                        return asset.status === 'LANCAR';
+                    case 'lunas':
+                        return asset.status === 'LUNAS';
                     default:
                         return true;
                 }
