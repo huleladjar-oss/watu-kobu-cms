@@ -318,22 +318,28 @@ export default function MobileHomePage() {
                                 return (
                                     <div
                                         key={task.id}
-                                        className={`bg-white rounded-lg hover:shadow-md transition-shadow ${hasPromise
-                                            ? 'border-2 border-l-4 border-amber-400 shadow-sm'
-                                            : isPendingValidation
-                                                ? 'border border-l-4 border-l-yellow-400 border-gray-200'
+                                        className={`bg-white rounded-lg hover:shadow-md transition-shadow ${isPendingValidation
+                                            ? 'border border-l-4 border-l-yellow-400 border-gray-200'
+                                            : hasPromise
+                                                ? 'border-2 border-l-4 border-amber-400 shadow-sm'
                                                 : 'border border-gray-200'
                                             }`}
                                     >
-                                        {/* Priority Badge (Promise to Pay) */}
-                                        {hasPromise && (
+                                        {/* Priority Badge */}
+                                        {isPendingValidation ? (
+                                            <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 px-4 py-2 border-b border-yellow-200">
+                                                <p className="text-xs font-bold text-yellow-700 flex items-center gap-2">
+                                                    ⏳ MENUNGGU VALIDASI ADMIN
+                                                </p>
+                                            </div>
+                                        ) : hasPromise ? (
                                             <div className="bg-gradient-to-r from-amber-50 to-amber-100 px-4 py-2 border-b border-amber-200">
                                                 <p className="text-xs font-bold text-amber-700 flex items-center gap-2">
                                                     <Handshake size={14} />
                                                     JANJI BAYAR HARI INI
                                                 </p>
                                             </div>
-                                        )}
+                                        ) : null}
 
                                         {/* Card Content */}
                                         <div className="p-4">
@@ -343,7 +349,7 @@ export default function MobileHomePage() {
                                                     <h3 className="text-base font-semibold text-gray-900 mb-0.5">
                                                         {task.debtorName}
                                                     </h3>
-                                                    {isPendingValidation && !hasPromise ? (
+                                                    {isPendingValidation ? (
                                                         <p className="text-xs text-yellow-600 font-medium">⏳ Menunggu Validasi Admin</p>
                                                     ) : notVisited && !hasPromise ? (
                                                         <p className="text-xs text-blue-600 font-medium">⚡ Belum Dikunjungi</p>
@@ -376,7 +382,7 @@ export default function MobileHomePage() {
                                                     </p>
                                                 </div>
 
-                                                {isPendingValidation && !hasPromise ? (
+                                                {isPendingValidation ? (
                                                     <span className="px-4 py-2 font-semibold text-sm rounded-lg bg-yellow-100 text-yellow-700 border border-yellow-300 flex items-center gap-1">
                                                         ⏳ Pending
                                                     </span>

@@ -46,6 +46,14 @@ export async function PATCH(
             },
         });
 
+        // On APPROVED: if visit report notes contain a commitment date, set asset to JANJI_BAYAR
+        if (status === 'APPROVED' && report.notes && report.notes.includes('Komitmen:')) {
+            await prisma.asset.update({
+                where: { id: report.assetId },
+                data: { status: 'JANJI_BAYAR' },
+            });
+        }
+
         return NextResponse.json({ success: true, data: report });
     } catch (error) {
         console.error('Error updating visit report:', error);

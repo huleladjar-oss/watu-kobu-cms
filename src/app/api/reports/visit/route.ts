@@ -40,13 +40,8 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // If collector sets commitment date, update asset status to JANJI_BAYAR
-        if (commitmentDate) {
-            await prisma.asset.update({
-                where: { id: assetId },
-                data: { status: 'JANJI_BAYAR' },
-            });
-        }
+        // Note: Asset status (e.g. JANJI_BAYAR) should only change AFTER admin approves
+        // The commitmentDate is stored in the report notes for admin review
 
         return NextResponse.json({ success: true, data: report }, { status: 201 });
     } catch (error) {
