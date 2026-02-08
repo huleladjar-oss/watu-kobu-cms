@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, Wallet, AlertTriangle, X, Check, Filter, ChevronDown, UserPlus, Loader2 } from 'lucide-react';
+import { Users, Wallet, AlertTriangle, X, Check, Filter, ChevronDown, UserPlus, UserMinus, ArrowRightLeft, Loader2 } from 'lucide-react';
 import { useAssets, Asset } from '@/context/AssetContext';
 
 // Collector type from API
@@ -68,8 +68,10 @@ function CollectorWorkloadCard({ collector, assets, isSelected, onClick, maxCase
     );
 }
 
-// Assignment Modal
-function AssignmentModal({ selectedAssets, onClose, onConfirm, assets, collectors }: { selectedAssets: Asset[]; onClose: () => void; onConfirm: (collectorId: string) => void; assets: Asset[]; collectors: Collector[] }) {
+// Assignment Modal (reused for both assign and re-assign)
+function AssignmentModal({ selectedAssets, onClose, onConfirm, assets, collectors, title, actionLabel }: {
+    selectedAssets: Asset[]; onClose: () => void; onConfirm: (collectorId: string) => void; assets: Asset[]; collectors: Collector[]; title?: string; actionLabel?: string;
+}) {
     const [selectedCollector, setSelectedCollector] = useState<string | null>(null);
     const totalValue = selectedAssets.reduce((sum, a) => sum + a.totalArrears, 0);
 
@@ -86,7 +88,7 @@ function AssignmentModal({ selectedAssets, onClose, onConfirm, assets, collector
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
                 <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
-                    <div><h3 className="text-lg font-bold text-white">Assign ke Kolektor</h3><p className="text-blue-200 text-sm">{selectedAssets.length} debitur terpilih</p></div>
+                    <div><h3 className="text-lg font-bold text-white">{title || 'Assign ke Kolektor'}</h3><p className="text-blue-200 text-sm">{selectedAssets.length} debitur terpilih</p></div>
                     <button onClick={onClose} className="p-1 hover:bg-blue-500 rounded-full cursor-pointer"><X size={20} className="text-white" /></button>
                 </div>
                 <div className="p-4 bg-blue-50 border-b border-blue-100">
@@ -121,7 +123,7 @@ function AssignmentModal({ selectedAssets, onClose, onConfirm, assets, collector
                 <div className="px-4 py-4 bg-slate-50 border-t border-slate-200 flex gap-3">
                     <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-lg cursor-pointer">Batal</button>
                     <button onClick={() => selectedCollector && onConfirm(selectedCollector)} disabled={!selectedCollector} className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-lg disabled:bg-slate-300 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2">
-                        <Check size={18} />Assign {selectedAssets.length} Debitur
+                        <Check size={18} />{actionLabel || `Assign ${selectedAssets.length} Debitur`}
                     </button>
                 </div>
             </div>
@@ -129,21 +131,55 @@ function AssignmentModal({ selectedAssets, onClose, onConfirm, assets, collector
     );
 }
 
-// Toast
-function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+// Confirm Unassign Modal
+function UnassignConfirmModal({ selectedAssets, onClose, onConfirm }: {
+    selectedAssets: Asset[]; onClose: () => void; onConfirm: () => void;
+}) {
     return (
-        <div className="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 z-50">
-            <Check size={20} /><p className="font-medium">{message}</p>
-            <button onClick={onClose} className="ml-2 hover:bg-green-700 rounded-full p-1 cursor-pointer"><X size={16} /></button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <UserMinus size={32} className="text-orange-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Tarik Penugasan?</h3>
+                <p className="text-slate-600 mb-2">{selectedAssets.length} debitur akan di-<strong>unassign</strong> dari kolektor.</p>
+                <div className="bg-orange-50 rounded-lg p-3 mb-6 text-left">
+                    <p className="text-xs font-semibold text-orange-700 uppercase mb-2">Debitur yang ditarik:</p>
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                        {selectedAssets.map((a) => (
+                            <p key={a.id} className="text-sm text-slate-700">• {a.debtorName} <span className="text-slate-400">({a.loanId})</span></p>
+                        ))}
+                    </div>
+                </div>
+                <div className="flex gap-3">
+                    <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg font-semibold cursor-pointer">Batal</button>
+                    <button onClick={onConfirm} className="flex-1 px-4 py-2.5 bg-orange-600 text-white rounded-lg font-semibold cursor-pointer hover:bg-orange-700">Tarik Penugasan</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Toast
+function Toast({ message, type = 'success', onClose }: { message: string; type?: 'success' | 'warning'; onClose: () => void }) {
+    const bg = type === 'success' ? 'bg-green-600' : 'bg-orange-600';
+    const Icon = type === 'success' ? Check : AlertTriangle;
+    return (
+        <div className={`fixed bottom-6 right-6 ${bg} text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 z-50`}>
+            <Icon size={20} /><p className="font-medium">{message}</p>
+            <button onClick={onClose} className="ml-2 hover:bg-black/20 rounded-full p-1 cursor-pointer"><X size={16} /></button>
         </div>
     );
 }
 
 export default function AssignmentsPage() {
-    const { assets, getUnassignedAssets, assignBulkAssets } = useAssets();
+    const { assets, getUnassignedAssets, assignBulkAssets, unassignAsset } = useAssets();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [showModal, setShowModal] = useState(false);
-    const [toast, setToast] = useState<string | null>(null);
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [showUnassignModal, setShowUnassignModal] = useState(false);
+    const [showReassignModal, setShowReassignModal] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
+    const [activeTab, setActiveTab] = useState<'unassigned' | 'assigned'>('unassigned');
 
     // Real collectors from API
     const [collectors, setCollectors] = useState<Collector[]>([]);
@@ -171,8 +207,10 @@ export default function AssignmentsPage() {
     const [branchFilter, setBranchFilter] = useState<string>('all');
     const [spkFilter, setSpkFilter] = useState<string>('all');
     const [minArrears, setMinArrears] = useState<number>(0);
+    const [collectorFilter, setCollectorFilter] = useState<string>('all');
 
     const unassignedAssets = getUnassignedAssets();
+    const assignedAssets = useMemo(() => assets.filter((a) => a.collectorId !== null), [assets]);
 
     // Get unique branches from data
     const branches = useMemo(() => {
@@ -180,23 +218,27 @@ export default function AssignmentsPage() {
         return Array.from(branchSet).sort();
     }, [assets]);
 
-    // Filtered unassigned assets
+    // Filtered assets based on active tab
     const filteredAssets = useMemo(() => {
-        return unassignedAssets.filter((asset) => {
+        const source = activeTab === 'unassigned' ? unassignedAssets : assignedAssets;
+        return source.filter((asset) => {
             const matchesBranch = branchFilter === 'all' || asset.branch === branchFilter;
             const matchesSpk = spkFilter === 'all' || asset.spkStatus === spkFilter;
             const matchesArrears = asset.totalArrears >= minArrears;
-            return matchesBranch && matchesSpk && matchesArrears;
+            const matchesCollector = activeTab === 'unassigned' || collectorFilter === 'all' || asset.collectorId === collectorFilter;
+            return matchesBranch && matchesSpk && matchesArrears && matchesCollector;
         }).sort((a, b) => b.totalArrears - a.totalArrears);
-    }, [unassignedAssets, branchFilter, spkFilter, minArrears]);
+    }, [activeTab, unassignedAssets, assignedAssets, branchFilter, spkFilter, minArrears, collectorFilter]);
 
     // Stats
     const stats = useMemo(() => {
         const unassignedCount = unassignedAssets.length;
         const unassignedValue = unassignedAssets.reduce((sum, a) => sum + a.totalArrears, 0);
+        const assignedCount = assignedAssets.length;
+        const assignedValue = assignedAssets.reduce((sum, a) => sum + a.totalArrears, 0);
         const priorityCount = unassignedAssets.filter((a) => a.totalArrears > 100000000).length;
-        return { unassignedCount, unassignedValue, priorityCount };
-    }, [unassignedAssets]);
+        return { unassignedCount, unassignedValue, assignedCount, assignedValue, priorityCount };
+    }, [unassignedAssets, assignedAssets]);
 
     const selectedAssets = filteredAssets.filter((a) => selectedIds.includes(a.id));
     const selectedValue = selectedAssets.reduce((sum, a) => sum + a.totalArrears, 0);
@@ -205,20 +247,65 @@ export default function AssignmentsPage() {
     const toggleSelect = (id: string) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
     const toggleSelectAll = () => setSelectedIds(allSelected ? [] : filteredAssets.map((a) => a.id));
 
+    // Clear selection on tab change
+    const handleTabChange = (tab: 'unassigned' | 'assigned') => {
+        setActiveTab(tab);
+        setSelectedIds([]);
+    };
+
+    const showToastMsg = (message: string, type: 'success' | 'warning' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    // Assign handler
     const handleAssign = (collectorId: string) => {
         if (selectedIds.length > 0) {
             assignBulkAssets(selectedIds, collectorId);
             const collector = collectors.find((c) => c.id === collectorId);
-            setToast(`${selectedIds.length} debitur di-assign ke ${collector?.name}`);
+            showToastMsg(`${selectedIds.length} debitur di-assign ke ${collector?.name}`);
             setSelectedIds([]);
-            setShowModal(false);
-            setTimeout(() => setToast(null), 3000);
+            setShowAssignModal(false);
         }
+    };
+
+    // Re-assign handler
+    const handleReassign = (collectorId: string) => {
+        if (selectedIds.length > 0) {
+            assignBulkAssets(selectedIds, collectorId);
+            const collector = collectors.find((c) => c.id === collectorId);
+            showToastMsg(`${selectedIds.length} debitur di-pindahkan ke ${collector?.name}`);
+            setSelectedIds([]);
+            setShowReassignModal(false);
+        }
+    };
+
+    // Unassign handler
+    const handleUnassign = async () => {
+        let count = 0;
+        for (const id of selectedIds) {
+            try {
+                await unassignAsset(id);
+                count++;
+            } catch (err) {
+                console.error('Error unassigning:', err);
+            }
+        }
+        showToastMsg(`${count} debitur ditarik dari penugasan`, 'warning');
+        setSelectedIds([]);
+        setShowUnassignModal(false);
     };
 
     const handleSingleAssign = (assetId: string) => {
         setSelectedIds([assetId]);
-        setShowModal(true);
+        setShowAssignModal(true);
+    };
+
+    // Get collector name by id
+    const getCollectorName = (collectorId: string | null) => {
+        if (!collectorId) return '-';
+        const collector = collectors.find((c) => c.id === collectorId);
+        return collector?.name || 'Unknown';
     };
 
     return (
@@ -240,8 +327,8 @@ export default function AssignmentsPage() {
                     <div><p className="text-sm text-slate-500">Unassigned Cases</p><p className="text-2xl font-bold text-slate-900">{stats.unassignedCount}</p></div>
                 </div>
                 <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center gap-4">
-                    <div className="p-3 bg-red-100 rounded-xl"><Wallet size={24} className="text-red-600" /></div>
-                    <div><p className="text-sm text-slate-500">Unassigned Value</p><p className="text-2xl font-bold text-red-600">{formatRupiah(stats.unassignedValue, true)}</p></div>
+                    <div className="p-3 bg-blue-100 rounded-xl"><Users size={24} className="text-blue-600" /></div>
+                    <div><p className="text-sm text-slate-500">Assigned Cases</p><p className="text-2xl font-bold text-blue-600">{stats.assignedCount}</p></div>
                 </div>
                 <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center gap-4">
                     <div className="p-3 bg-yellow-100 rounded-xl"><AlertTriangle size={24} className="text-yellow-600" /></div>
@@ -253,6 +340,30 @@ export default function AssignmentsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
                 {/* Left Panel: The Queue */}
                 <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    {/* TABS: Unassigned / Assigned */}
+                    <div className="flex border-b border-slate-200">
+                        <button
+                            onClick={() => handleTabChange('unassigned')}
+                            className={`flex-1 px-6 py-3.5 text-sm font-semibold transition-all cursor-pointer ${activeTab === 'unassigned' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                        >
+                            <span className="flex items-center justify-center gap-2">
+                                <UserPlus size={16} />
+                                Belum Ditugaskan
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-700 font-bold">{stats.unassignedCount}</span>
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('assigned')}
+                            className={`flex-1 px-6 py-3.5 text-sm font-semibold transition-all cursor-pointer ${activeTab === 'assigned' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                        >
+                            <span className="flex items-center justify-center gap-2">
+                                <Users size={16} />
+                                Sudah Ditugaskan
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 font-bold">{stats.assignedCount}</span>
+                            </span>
+                        </button>
+                    </div>
+
                     {/* Filter Toolbar */}
                     <div className="p-4 bg-slate-50 border-b border-slate-200">
                         <div className="flex flex-wrap items-center gap-3">
@@ -272,6 +383,15 @@ export default function AssignmentsPage() {
                                 </select>
                                 <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                             </div>
+                            {activeTab === 'assigned' && (
+                                <div className="relative">
+                                    <select value={collectorFilter} onChange={(e) => setCollectorFilter(e.target.value)} className="pl-3 pr-8 py-2 text-sm border border-slate-300 rounded-lg cursor-pointer appearance-none bg-white">
+                                        <option value="all">Semua Kolektor</option>
+                                        {collectors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                    <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                </div>
+                            )}
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-slate-500">Min. Tunggakan:</span>
                                 <input type="number" value={minArrears} onChange={(e) => setMinArrears(Number(e.target.value) || 0)} placeholder="0" className="w-28 px-3 py-2 text-sm border border-slate-300 rounded-lg" />
@@ -288,6 +408,7 @@ export default function AssignmentsPage() {
                                     <th className="px-3 py-3 w-10"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 accent-blue-600 cursor-pointer" /></th>
                                     <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase">Account</th>
                                     <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase">Debitur</th>
+                                    {activeTab === 'assigned' && <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase">Kolektor</th>}
                                     <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase text-center">SPK</th>
                                     <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Tagihan</th>
                                     <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase text-center w-20">Action</th>
@@ -295,16 +416,41 @@ export default function AssignmentsPage() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {filteredAssets.length === 0 ? (
-                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-400">Tidak ada data unassigned</td></tr>
+                                    <tr><td colSpan={activeTab === 'assigned' ? 7 : 6} className="px-6 py-12 text-center text-slate-400">
+                                        {activeTab === 'unassigned' ? 'Semua debitur sudah ditugaskan ✓' : 'Tidak ada data'}
+                                    </td></tr>
                                 ) : filteredAssets.map((asset) => (
                                     <tr key={asset.id} className={`hover:bg-slate-50 ${selectedIds.includes(asset.id) ? 'bg-blue-50' : ''}`}>
                                         <td className="px-3 py-2.5"><input type="checkbox" checked={selectedIds.includes(asset.id)} onChange={() => toggleSelect(asset.id)} className="w-4 h-4 accent-blue-600 cursor-pointer" /></td>
                                         <td className="px-3 py-2.5 font-mono text-slate-600">{asset.loanId}</td>
                                         <td className="px-3 py-2.5"><p className="font-medium text-slate-900">{asset.debtorName}</p><p className="text-xs text-slate-400">{asset.branch || '-'}</p></td>
+                                        {activeTab === 'assigned' && (
+                                            <td className="px-3 py-2.5">
+                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">
+                                                    <div className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                                                        {getCollectorName(asset.collectorId).split(' ').map((n) => n[0]).join('')}
+                                                    </div>
+                                                    {getCollectorName(asset.collectorId)}
+                                                </span>
+                                            </td>
+                                        )}
                                         <td className="px-3 py-2.5 text-center"><SPKBadge status={asset.spkStatus} /></td>
                                         <td className="px-3 py-2.5 text-right font-bold text-red-600">{formatRupiah(asset.totalArrears, true)}</td>
                                         <td className="px-3 py-2.5 text-center">
-                                            <button onClick={() => handleSingleAssign(asset.id)} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg cursor-pointer" title="Assign"><UserPlus size={16} /></button>
+                                            {activeTab === 'unassigned' ? (
+                                                <button onClick={() => handleSingleAssign(asset.id)} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg cursor-pointer" title="Assign">
+                                                    <UserPlus size={16} />
+                                                </button>
+                                            ) : (
+                                                <div className="flex items-center justify-center gap-0.5">
+                                                    <button onClick={() => { setSelectedIds([asset.id]); setShowReassignModal(true); }} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg cursor-pointer" title="Re-assign">
+                                                        <ArrowRightLeft size={16} />
+                                                    </button>
+                                                    <button onClick={() => { setSelectedIds([asset.id]); setShowUnassignModal(true); }} className="p-1.5 text-orange-600 hover:bg-orange-100 rounded-lg cursor-pointer" title="Tarik Penugasan">
+                                                        <UserMinus size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -347,17 +493,57 @@ export default function AssignmentsPage() {
                     <span className="text-slate-400">|</span>
                     <span className="text-sm text-slate-300">Total: {formatRupiah(selectedValue, true)}</span>
                     <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-slate-300 hover:text-white cursor-pointer">Cancel</button>
-                    <button onClick={() => setShowModal(true)} className="px-4 py-1.5 bg-blue-600 rounded-lg font-semibold cursor-pointer flex items-center gap-2 hover:bg-blue-500">
-                        <UserPlus size={16} />Assign to Collector
-                    </button>
+
+                    {activeTab === 'unassigned' ? (
+                        <button onClick={() => setShowAssignModal(true)} className="px-4 py-1.5 bg-blue-600 rounded-lg font-semibold cursor-pointer flex items-center gap-2 hover:bg-blue-500">
+                            <UserPlus size={16} />Assign to Collector
+                        </button>
+                    ) : (
+                        <>
+                            <button onClick={() => setShowReassignModal(true)} className="px-4 py-1.5 bg-blue-600 rounded-lg font-semibold cursor-pointer flex items-center gap-2 hover:bg-blue-500">
+                                <ArrowRightLeft size={16} />Re-assign
+                            </button>
+                            <button onClick={() => setShowUnassignModal(true)} className="px-4 py-1.5 bg-orange-600 rounded-lg font-semibold cursor-pointer flex items-center gap-2 hover:bg-orange-500">
+                                <UserMinus size={16} />Tarik
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
 
-            {/* Modal */}
-            {showModal && selectedAssets.length > 0 && <AssignmentModal selectedAssets={selectedAssets} onClose={() => { setShowModal(false); setSelectedIds([]); }} onConfirm={handleAssign} assets={assets} collectors={collectors} />}
+            {/* Modals */}
+            {showAssignModal && selectedAssets.length > 0 && (
+                <AssignmentModal
+                    selectedAssets={selectedAssets}
+                    onClose={() => { setShowAssignModal(false); setSelectedIds([]); }}
+                    onConfirm={handleAssign}
+                    assets={assets}
+                    collectors={collectors}
+                />
+            )}
+
+            {showReassignModal && selectedAssets.length > 0 && (
+                <AssignmentModal
+                    selectedAssets={selectedAssets}
+                    onClose={() => { setShowReassignModal(false); setSelectedIds([]); }}
+                    onConfirm={handleReassign}
+                    assets={assets}
+                    collectors={collectors}
+                    title="Re-assign Kolektor"
+                    actionLabel={`Pindahkan ${selectedAssets.length} Debitur`}
+                />
+            )}
+
+            {showUnassignModal && selectedAssets.length > 0 && (
+                <UnassignConfirmModal
+                    selectedAssets={selectedAssets}
+                    onClose={() => { setShowUnassignModal(false); setSelectedIds([]); }}
+                    onConfirm={handleUnassign}
+                />
+            )}
 
             {/* Toast */}
-            {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
     );
 }

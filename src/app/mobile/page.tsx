@@ -78,17 +78,21 @@ export default function MobileHomePage() {
         fetchDashboard();
     }, [user]);
 
-    // Filter tasks for current collector
+    // Filter tasks for current collector (exclude LUNAS = completed)
     const myTasks = useMemo(() => {
         if (!user) return [];
 
+        let tasks: typeof assets;
         // Debug mode: if admin, show all tasks
         if (user.role === 'ADMIN') {
-            return assets.filter((a) => a.collectorId !== null);
+            tasks = assets.filter((a) => a.collectorId !== null);
+        } else {
+            // Regular mode: show only assigned tasks
+            tasks = assets.filter((a) => a.collectorId === user.id);
         }
 
-        // Regular mode: show only assigned tasks
-        return assets.filter((a) => a.collectorId === user.id);
+        // Exclude LUNAS (completed) assets from display
+        return tasks.filter((a) => a.status !== 'LUNAS');
     }, [assets, user]);
 
     // Calculate comprehensive KPI metrics

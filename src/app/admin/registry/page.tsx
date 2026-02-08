@@ -164,6 +164,7 @@ function convertBankRowsToAssets(rows: Record<string, string>[], mapping: BankCo
             namaEmergencyKontak, nomorTeleponEmergency, alamatEmergencyKontak,
             plafondAwal, tanggalRealisasi, tanggalJatuhTempo,
             saldoPokok, tunggakanBunga, tunggakanDenda, tunggakanAngsuran, totalTunggakan, lunasTunggakan, lunasKredit,
+            status: 'LANCAR' as const,
             collectorId: null,
 
             // Backward-compatible English Aliases

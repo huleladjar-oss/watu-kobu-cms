@@ -27,6 +27,7 @@ enum AssetStatus {
   LANCAR
   MACET
   JANJI_BAYAR
+  LUNAS
 }
 
 enum ValidationStatus {

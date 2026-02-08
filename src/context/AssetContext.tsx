@@ -48,6 +48,7 @@ export interface Asset {
     lunasKredit: number;            // LUNAS KREDIT
 
     // H. SYSTEM
+    status: 'LANCAR' | 'MACET' | 'JANJI_BAYAR' | 'LUNAS';
     collectorId: string | null;
     lastUpdate: string;
 

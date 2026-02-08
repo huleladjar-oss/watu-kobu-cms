@@ -113,6 +113,7 @@ export async function GET(request: NextRequest) {
                 totalPayoff: asset.lunasKredit,
 
                 // System
+                status: asset.status,
                 collectorId: asset.collectorId,
                 lastUpdate: asset.updatedAt.toISOString().split('T')[0],
             };
