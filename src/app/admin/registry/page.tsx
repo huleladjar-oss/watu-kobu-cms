@@ -222,6 +222,7 @@ function AssetDetailModal({ asset, onClose }: { asset: Asset; onClose: () => voi
                             <div><span className="text-slate-500">Kanwil:</span> <span className="text-slate-700">{asset.kanwil || '-'}</span></div>
                             <div><span className="text-slate-500">Jenis Kredit:</span> <span className="text-slate-700">{asset.jenisKredit || '-'}</span></div>
                             <div><span className="text-slate-500">Status SPK:</span> <span className={`px-2 py-0.5 rounded text-xs font-semibold ${spkStatusStyles[asset.kelolaanTerbitSpk]}`}>{asset.kelolaanTerbitSpk}</span></div>
+                            {asset.namaKreditur && <div><span className="text-slate-500">Nama Kreditur:</span> <span className="font-medium text-slate-900">{asset.namaKreditur}</span></div>}
                         </div>
                     </div>
                     {/* Identitas Debitur */}
