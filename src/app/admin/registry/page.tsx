@@ -222,7 +222,7 @@ function AssetDetailModal({ asset, onClose }: { asset: Asset; onClose: () => voi
                             <div><span className="text-slate-500">Kanwil:</span> <span className="text-slate-700">{asset.kanwil || '-'}</span></div>
                             <div><span className="text-slate-500">Jenis Kredit:</span> <span className="text-slate-700">{asset.jenisKredit || '-'}</span></div>
                             <div><span className="text-slate-500">Status SPK:</span> <span className={`px-2 py-0.5 rounded text-xs font-semibold ${spkStatusStyles[asset.kelolaanTerbitSpk]}`}>{asset.kelolaanTerbitSpk}</span></div>
-                            {asset.namaKreditur && <div><span className="text-slate-500">Nama Kreditur:</span> <span className="font-medium text-slate-900">{asset.namaKreditur}</span></div>}
+                            <div><span className="text-slate-500">Nama Kreditur:</span> <span className="font-medium text-slate-900">{asset.namaKreditur || '-'}</span></div>
                         </div>
                     </div>
                     {/* Identitas Debitur */}
@@ -441,24 +441,26 @@ export default function RegistryPage() {
                         <thead><tr className="bg-slate-50 border-b border-slate-200">
                             <th className="px-4 py-4 w-12"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 accent-blue-600 cursor-pointer" /></th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Nomor Account</th>
+                            <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Jenis Kredit</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Nama Debitur</th>
+                            <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Nama Kreditur</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Kantor Cabang</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Total Tunggakan</th>
-                            <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase">Jenis Kredit</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase text-center">Status SPK</th>
                             <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase text-center">Actions</th>
                         </tr></thead>
                         <tbody className="divide-y divide-slate-200">
                             {filteredAssets.length === 0 ? (
-                                <tr><td colSpan={8} className="px-6 py-12 text-center text-slate-500"><Search size={40} className="text-slate-300 mx-auto mb-2" /><p>Tidak ada data</p></td></tr>
+                                <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-500"><Search size={40} className="text-slate-300 mx-auto mb-2" /><p>Tidak ada data</p></td></tr>
                             ) : filteredAssets.map((asset) => (
                                 <tr key={asset.id} className={`hover:bg-slate-50 ${selectedIds.includes(asset.id) ? 'bg-blue-50' : ''}`}>
                                     <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.includes(asset.id)} onChange={() => toggleSelectAsset(asset.id)} className="w-4 h-4 accent-blue-600 cursor-pointer" /></td>
                                     <td className="px-4 py-3 font-mono text-sm text-slate-600">{asset.nomorAccount}</td>
+                                    <td className="px-4 py-3 text-sm text-slate-600">{asset.jenisKredit || '-'}</td>
                                     <td className="px-4 py-3"><p className="font-medium text-slate-900">{asset.namaDebitur}</p></td>
+                                    <td className="px-4 py-3 text-sm text-slate-700 font-medium">{asset.namaKreditur || '-'}</td>
                                     <td className="px-4 py-3 text-sm text-slate-600">{asset.kantorCabang || '-'}</td>
                                     <td className="px-4 py-3 text-right font-bold text-red-600">{formatRupiah(asset.totalTunggakan)}</td>
-                                    <td className="px-4 py-3 text-sm text-slate-600">{asset.jenisKredit || '-'}</td>
                                     <td className="px-4 py-3 text-center"><span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${spkStatusStyles[asset.kelolaanTerbitSpk]}`}>{asset.kelolaanTerbitSpk}</span></td>
                                     <td className="px-4 py-3"><div className="flex items-center justify-center gap-1">
                                         <button onClick={() => setViewingAsset(asset)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer" title="View"><Eye size={18} /></button>
